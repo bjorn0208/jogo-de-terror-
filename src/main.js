@@ -22,7 +22,22 @@ const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 const lowEnd = isTouch || (navigator.hardwareConcurrency || 8) <= 4;
 
 /* ---- Renderer ------------------------------------------------------- */
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowEnd, powerPreference: 'high-performance' });
+// Alguns aparelhos recusam o contexto "high-performance". Tenta uma segunda
+// configuração mais conservadora antes de considerar que não há WebGL.
+function createRenderer() {
+  try {
+    return new THREE.WebGLRenderer({ canvas, antialias: !lowEnd, powerPreference: 'high-performance' });
+  } catch (first) {
+    try {
+      return new THREE.WebGLRenderer({
+        canvas, antialias: false, powerPreference: 'default', failIfMajorPerformanceCaveat: false,
+      });
+    } catch (_) {
+      throw first;
+    }
+  }
+}
+const renderer = createRenderer();
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : 1.6));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;

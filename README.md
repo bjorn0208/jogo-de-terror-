@@ -80,6 +80,15 @@ render direto caso o aparelho não suporte.
 Se o jogo ficar preso em "CARREGANDO AMBIENTE...", aparecerá um aviso vermelho
 com o erro na parte de baixo da tela.
 
+### Erro "Error creating WebGL context"
+
+Isso significa que o navegador/aparelho não conseguiu criar o WebGL — não é um
+problema do jogo. O aviso na tela agora traz um diagnóstico (`webgl2`, `webgl` e
+navegador). Para testar, abra `https://get.webgl.org/` no mesmo navegador. No
+Android, ative a aceleração de hardware / use Chrome ou Firefox; em desktop,
+ative a aceleração de hardware nas configurações do navegador. Se ainda falhar,
+me envie o texto completo do aviso vermelho.
+
 ## Desenvolvimento
 
 ```bash

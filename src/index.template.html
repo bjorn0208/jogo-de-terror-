@@ -103,8 +103,28 @@
     e.textContent='ERRO: '+msg+'\nSe aparecer isso, me mande o texto.';
   }
   window.__showError=show;
+  function webglInfo(){
+    var i={webgl2:false,webgl:false};
+    try{
+      var c=document.createElement('canvas');
+      i.webgl2=!!(window.WebGL2RenderingContext&&c.getContext('webgl2'));
+      i.webgl=!!c.getContext('webgl');
+    }catch(e){i.testError=String((e&&e.message)||e);}
+    i.ua=navigator.userAgent;
+    return i;
+  }
+  window.__webglInfo=webglInfo;
   window.addEventListener('error',function(ev){
-    show((ev.message||'erro desconhecido')+' @ '+(ev.filename||'').split('/').pop()+':'+(ev.lineno||''));
+    var m=ev.message||'erro desconhecido';
+    if(/WebGL/i.test(m)){
+      var i=webglInfo();
+      show('Sem WebGL neste navegador/aparelho.\n'+
+           'webgl2: '+i.webgl2+' | webgl: '+i.webgl+'\n'+
+           'Ative a aceleração de hardware ou use Chrome/Firefox com WebGL ligado.\n'+
+           'Diagnóstico: '+m+' | '+i.ua);
+      return;
+    }
+    show(m+' @ '+(ev.filename||'').split('/').pop()+':'+(ev.lineno||''));
   });
   window.addEventListener('unhandledrejection',function(ev){
     show('Promise: '+((ev.reason&&ev.reason.message)||ev.reason));
