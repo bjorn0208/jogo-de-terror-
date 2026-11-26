@@ -231,12 +231,8 @@ function showPhrase(id, text, seconds = 4) {
   showHint(text, seconds);
 }
 
-/** Folha aberta na frente do jogador, com o número destacado. */
-function openPaperUI(note) {
-  const html = note.text
-    .replace(/\{\{(\d)\}\}/g, '<b class="num">$1</b>')
-    .replace(/\{\{n\}\}/g, '<b class="num">' + note.number + '</b>');
-  $('paper-text').innerHTML = html;
+/** Folha aberta na frente do jogador: apenas a imagem da pista. */
+function openPaperUI() {
   const img = $('paper-img');
   const src = window.__PORAO_PAPER__ || '';
   if (src) {
@@ -385,7 +381,7 @@ function interact() {
   } else if (t.type === 'paper') {
     t.obj.read = true;
     audio.paper();
-    openPaperUI(t.obj);
+    openPaperUI();
     // a folha do quarto muda o fundo sonoro
     if (items.papers.indexOf(t.obj) === items.papers.length - 1) audio.playForestBed();
   } else if (t.type === 'safe') {

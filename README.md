@@ -36,13 +36,12 @@ automaticamente. Se acabar a última pilha, você morre no escuro — o som de l
 já avisa, sem monstro.
 
 A **folha única** está pregada na parede da divisão, do lado do quarto (andar
-de cima). Ela traz os quatro códigos destacados entre as palavras, na ordem
-certa. Ao apertar para ler, aparece a imagem da folha suja em primeiro plano na
-sua frente, com os códigos destacados logo abaixo (`Enter`, `Espaço` ou `Esc`
-para guardar). A imagem vem embutida no `index.html`, sem internet. O **cofre está em cima do
-criado-mudo no quarto** e guarda a chave da porta. Abra-o com `E`/**PEGAR**,
-digite os quatro números na ordem da folha, pegue a chave e desça para usar na
-porta de saída.
+de cima). Ao apertar para ler, aparece **apenas a imagem** da folha suja em
+primeiro plano, sem nenhum texto adicional (`Enter`, `Espaço` ou `Esc` para
+guardar). Os quatro códigos estão na imagem, na ordem certa, e ela vem embutida
+no `index.html`, sem internet. O **cofre está em cima do criado-mudo no quarto**
+e guarda a chave da porta. Abra-o com `E`/**PEGAR**, digite os quatro números da
+folha, pegue a chave e desça para usar na porta de saída.
 
 **Áudios:** ao entrar toca o fundo de "cena de assassino"; ao ler a folha do
 quarto o fundo muda para a "floresta escura"; quando a última pilha morre toca o
@@ -60,8 +59,9 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   piso de concreto, janela gradeada e a **única porta da casa** (a de saída,
   trancada, com o caminho livre de caixas). Também tem canos, caldeira,
   prateleiras, bancada, cadeira tombada, entulho, poças, manchas e teias.
-- Escada de 30 degraus totalmente aberta: **sem madeiras laterais e sem
-  corrimão**. Sobe até um **andar superior** com corredor e quarto — o quarto é
+- Escada de 30 degraus totalmente aberta: **sem madeiras laterais, sem corrimão
+  e sem cano de ferro atravessando os degraus**. Sobe até um **andar superior**
+  com corredor e quarto — o quarto é
   aberto, sem porta nem batente. O jogador sobe e desce com piso interpolado;
   as colisões são separadas por andar. Móveis e jogador usam a mesma escala.
 - **Texturas 100% procedurais**: cor, normal e rugosidade geradas em canvas

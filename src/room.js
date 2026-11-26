@@ -252,7 +252,7 @@ export function createRoom(scene, tex) {
   /* ---- Canos -------------------------------------------------------- */
   const pipeY = h - 0.23;
   cyl(metalMat, 0.065, w - 0.4, 0, pipeY, -2.45, { axis: 'x', segs: 14 });
-  cyl(metalMat, 0.045, w - 0.4, 0, pipeY - 0.19, 1.85, { axis: 'x', segs: 12 });
+  // nada de ferro atravessando o meio da escada
   cyl(metalMat, 0.055, d - 0.4, 3.45, pipeY, 0, { axis: 'z', segs: 12 });
   cyl(metalMat, 0.04, d - 0.4, -3.45, pipeY - 0.19, 0, { axis: 'z', segs: 12 });
   for (const [x, z, rad] of [[3.45, -2.45, 0.065], [3.45, 2.15, 0.055], [-3.45, -2.45, 0.065]]) {
@@ -264,10 +264,6 @@ export function createRoom(scene, tex) {
     box(blackMetal, 0.07, 0.3, 0.07, x, pipeY + 0.12, -2.45, { cast: false });
     box(blackMetal, 0.16, 0.03, 0.16, x, pipeY - 0.03, -2.45, { cast: false });
   }
-  const valve = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.018, 8, 18), metalMat);
-  valve.position.set(0.9, pipeY - 0.19, 1.85); valve.rotation.x = Math.PI / 2; register(valve);
-  cyl(metalMat, 0.03, 0.25, 0.9, pipeY - 0.08, 1.85, { segs: 8 });
-
   /* ---- Aquecedor / caldeira ----------------------------------------- */
   cyl(metalMat, 0.37, 1.3, 3.15, 0.68, -2.75, { segs: 24 });
   const dome = new THREE.Mesh(new THREE.SphereGeometry(0.37, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), metalMat);
