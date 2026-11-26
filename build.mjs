@@ -24,7 +24,11 @@ const options = {
         if (result.errors.length) return;
         const js = (result.outputFiles || []).find((f) => f.path.endsWith('bundle.js'))?.text || '';
         const safeJs = js.replace(/<\/script/gi, '<\\/script');
-        const html = tpl.replace('/*__STYLE__*/', css).replace('/*__BUNDLE__*/', safeJs);
+        // Funções de substituição evitam que "$&", "$'", "$1" etc. dentro do
+        // bundle minificado sejam interpretados como padrões do String.replace.
+        const html = tpl
+          .replace('/*__STYLE__*/', () => css)
+          .replace('/*__BUNDLE__*/', () => safeJs);
         await writeFile(join(root, 'index.html'), html);
         console.log(`index.html gerado (${(html.length / 1024).toFixed(0)} KB)`);
       });
