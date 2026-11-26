@@ -251,7 +251,8 @@ export function createRoom(scene, tex) {
   for (const zz of [sz - sw / 2, sz + sw / 2]) box(darkWoodMat, sd, 2.25, 0.05, sx, 1.13, zz);
   for (const yy of [0.12, 0.66, 1.2, 1.74, 2.23]) box(woodMat, sd, 0.045, sw, sx, yy, sz);
   box(darkWoodMat, 0.03, 2.25, sw, sx - sd / 2, 1.13, sz, { cast: false });
-  addCollider(sx, sz, sd + 0.1, sw + 0.1);
+  // altitude baixa: não pode travar quem já está no penúltimo degrau
+  addCollider(sx, sz, sd + 0.1, sw + 0.1, 0, 0, 2.25);
 
   // caixas, potes e garrafas nas prateleiras
   for (let shelf = 0; shelf < 4; shelf++) {
