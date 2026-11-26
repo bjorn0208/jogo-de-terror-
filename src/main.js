@@ -5,7 +5,6 @@ import { createAtmosphere } from './atmosphere.js';
 import { Controls } from './controls.js';
 import { HorrorAudio } from './audio.js';
 import { createComposer } from './postfx.js';
-import { createMonster } from './monster.js';
 import { createItems, BATTERY_SECONDS, MAX_SPARES, SAFE_CODE } from './items.js';
 import { createRats } from './rats.js';
 
@@ -60,7 +59,10 @@ scene.add(new THREE.AmbientLight(0x273329, 0.075));
 scene.add(new THREE.HemisphereLight(0x182019, 0x070906, 0.05));
 
 // Cone mais aberto pede mais intensidade: 30 mantém o hotspot presente.
-const FLASH_INTENSITY = 30;
+// Lanterna com o dobro da intensidade original (30 -> 60).
+const FLASH_INTENSITY = 60;
+const SPILL_INTENSITY = 10;
+const HAND_INTENSITY = 0.5;
 
 const controls = new Controls(camera, canvas, []);
 const audio = new HorrorAudio();
@@ -78,8 +80,7 @@ function renderFrame(time) {
   else renderer.render(scene, camera);
 }
 
-let room, atmosphere, monster, flash, spill, flashTarget, pointLight, torch, lens, glow, items, rats;
-const viewDir = new THREE.Vector3();
+let room, atmosphere, flash, spill, flashTarget, pointLight, torch, lens, glow, items, rats;
 let started = false, paused = false, flashOn = true, elapsed = 0, finished = false;
 let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 
@@ -163,13 +164,13 @@ function setupFlashlight(tex) {
 
   // Spill largo e fraco: a luz que "escorre" do reflector ao redor do hotspot.
   // Sem sombra, custa quase nada e evita o efeito de buraco preto ao redor.
-  spill = new THREE.SpotLight(0xffe0b4, 5, 13, 1.0, 1, 2);
+  spill = new THREE.SpotLight(0xffe0b4, SPILL_INTENSITY, 13, 1.0, 1, 2);
   spill.position.copy(flash.position);
   spill.target = flashTarget;
   camera.add(spill);
 
   // respingo quente só na própria lanterna/mão.
-  pointLight = new THREE.PointLight(0xffd9a0, 0.25, 1.0, 2);
+  pointLight = new THREE.PointLight(0xffd9a0, HAND_INTENSITY, 1.0, 2);
   pointLight.position.set(0.34, -0.3, -0.58);
   camera.add(pointLight);
 
@@ -198,8 +199,8 @@ function updateFlashlight(t, bob) {
     if (!blink) power *= 0.035;
   }
   flash.intensity = FLASH_INTENSITY * power;
-  spill.intensity = 5 * power;
-  pointLight.intensity = 0.25 * power;
+  spill.intensity = SPILL_INTENSITY * power;
+  pointLight.intensity = HAND_INTENSITY * power;
   glow.material.opacity = 0.45 * power;
 
   // Alvo quase fixo: o sway mexe a lanterna na mão, não a direção do feixe.
@@ -540,11 +541,6 @@ async function build() {
     items = createItems(scene);
     rats = createRats(scene, audio);
     rats.onScare = onScare;
-    monster = createMonster(scene, audio, room.colliders);
-    monster.onAttack = () => {
-      if (doomed) gameOver('Sem luz, ele não precisou mais se esconder.');
-      else showPhrase('attack', 'ALGO PASSOU MUITO PERTO.', 3);
-    };
     controls.reset(room.spawn);
     post?.setSize(window.innerWidth, window.innerHeight);
 
@@ -601,7 +597,6 @@ function restartGame() {
     items.safe.door.rotation.y = 0;
     items.padlock.visible = true;
   }
-  monster?.reset?.();
   flashOn = true;
   $('btn-flash')?.classList.add('active');
 
@@ -703,12 +698,9 @@ function animate() {
     updateBattery(dt);
     updateActionUI();
     checkStairCreaks();
-    camera.getWorldDirection(viewDir);
-    const lightOn = flashOn && batterySeconds > 0;
-    monster?.update(dt, camera.position, viewDir, lightOn, doomed);
     if (doomed) {
       doomTimer -= dt;
-      if (doomTimer <= 0) gameOver('Sem luz, ele encontrou você no escuro.');
+      if (doomTimer <= 0) gameOver('A última pilha morreu. O escuro te encontrou.');
     }
     rats?.update(dt, camera.position);
     maybeHint();

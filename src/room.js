@@ -7,9 +7,9 @@ import { rng } from './textures.js';
  *  retas — e o que faz um cenario parecer "real".
  * ------------------------------------------------------------------ */
 
-// A casa é montada em coordenadas BASE e depois escalada por SCALE.
-// O jogador mantém o tamanho humano: tudo à volta dele fica o dobro.
-export const SCALE = 2;
+// A casa é montada em coordenadas BASE e escalada por SCALE.
+// Tamanho normal: o jogador (1,62 m) e os móveis estão na mesma escala.
+export const SCALE = 1;
 const BASE = { w: 8.4, d: 7.2, h: 3.0, wall: 0.22 };
 export const ROOM = {
   w: BASE.w * SCALE,
@@ -155,7 +155,7 @@ export function createRoom(scene, tex) {
   box(darkWoodMat, 0.05, 0.14, d, hw - 0.14, 0.07, 0, { cast: false });
 
   /* ---- Escada -------------------------------------------------------- */
-  // 30 degraus mantêm cada passo com ~0,20 m depois da escala da casa.
+  // 30 degraus: a subida toda tem 3 m, cerca de 0,10 m por degrau.
   const steps = 30;
   for (let i = 0; i < steps; i++) {
     const t0 = i / steps, t1 = (i + 1) / steps;
@@ -346,8 +346,9 @@ export function createRoom(scene, tex) {
   anim.push((t) => { bucketWater.material.opacity = 0.5 + Math.sin(t * 0.7) * 0.03; });
 
   /* ---- Caixas empilhadas -------------------------------------------- */
+  // Nenhuma pilha de caixas bloqueia a aproximação da porta de saída.
   const stacks = [
-    [-1.75, 2.85, 2], [0.95, 2.9, 1], [2.65, 2.55, 2], [1.9, -2.9, 1],
+    [3.2, 2.8, 2], [1.6, 3.05, 1], [-3.1, -2.5, 2], [1.9, -2.9, 1],
   ];
   for (const [x, z, n] of stacks) {
     for (let i = 0; i < n; i++) {

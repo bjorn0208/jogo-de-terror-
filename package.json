@@ -7,7 +7,7 @@
   "scripts": {
     "build": "node build.mjs",
     "dev": "node build.mjs --watch",
-    "check": "node --check src/main.js && node --check src/textures.js && node --check src/room.js && node --check src/atmosphere.js && node --check src/audio.js && node --check src/controls.js && node --check src/postfx.js && node --check src/monster.js && node --check src/items.js && node --check src/rats.js"
+    "check": "node --check src/main.js && node --check src/textures.js && node --check src/room.js && node --check src/atmosphere.js && node --check src/audio.js && node --check src/controls.js && node --check src/postfx.js && node --check src/items.js && node --check src/rats.js"
   },
   "dependencies": {
     "three": "^0.180.0"

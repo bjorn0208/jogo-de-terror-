@@ -6,8 +6,8 @@ export const MAX_SPARES = 3;
 // Código do cofre: a ordem vem das quatro primeiras folhas.
 export const SAFE_CODE = '7391';
 
-/* Objetos escondidos: pilhas, folhas com pistas, o cofre sobre a bancada
-   do porão e o cadeado na porta de saída. Tudo em coordenadas da casa
+/* Objetos escondidos: pilhas, folhas com pistas, o cofre sobre o criado-mudo
+   do quarto e o cadeado na porta de saída. Tudo em coordenadas da casa
    (BASE), escalado junto com ela. */
 
 function paperTexture() {
@@ -129,9 +129,10 @@ export function createItems(scene) {
     };
   }
 
-  /* ---- Cofre sobre a bancada (sala de baixo) -------------------------- */
+  /* ---- Cofre sobre o criado-mudo (quarto, andar de cima) --------------- */
   const safe = new THREE.Group();
-  safe.position.set(3.45, 1.11, 0.45);
+  // topo do criado-mudo: uy(3) + 0,62 + 0,025; meio do cofre: +0,18
+  safe.position.set(3.1, 3.825, -2.9);
   const shell = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.36, 0.34), steel);
   safe.add(shell);
   const rim = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.02), dark);
@@ -156,7 +157,7 @@ export function createItems(scene) {
   ];
 
   // a chave fica dentro do cofre até ele ser aberto
-  const keyItem = key(3.45, 1.11, 0.56, false);
+  const keyItem = key(3.1, 3.825, -2.79, false);
 
   // cada folha tem um número destacado no meio do texto
   const papers = [
@@ -190,7 +191,7 @@ export function createItems(scene) {
     safe: {
       group: safe,
       door: doorPivot,
-      position: new THREE.Vector3(3.45 * SCALE, 1.11 * SCALE, 0.45 * SCALE),
+      position: new THREE.Vector3(3.1 * SCALE, 3.825 * SCALE, -2.9 * SCALE),
       open: false,
     },
     padlock,
