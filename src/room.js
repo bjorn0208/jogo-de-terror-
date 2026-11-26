@@ -41,6 +41,7 @@ export function createRoom(scene, tex) {
   const liquid = new THREE.MeshStandardMaterial({ color: 0x7a8c78, metalness: 0.15, roughness: 0.18, transparent: true, opacity: 0.55, depthWrite: false });
   const webMat = new THREE.MeshBasicMaterial({ map: tex.cobweb, color: 0x9aa08f, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
   const stainMat = new THREE.MeshStandardMaterial({ map: tex.stain, transparent: true, opacity: 0.85, depthWrite: false, roughness: 1, color: 0x6d725f, side: THREE.DoubleSide });
+  const bloodMat = new THREE.MeshStandardMaterial({ map: tex.stain, transparent: true, opacity: 0.9, depthWrite: false, roughness: 1, color: 0x651a14, side: THREE.DoubleSide });
 
   function register(mesh, cast = true, receive = true) {
     mesh.castShadow = cast; mesh.receiveShadow = receive;
@@ -228,15 +229,40 @@ export function createRoom(scene, tex) {
     { collide: true, minY: uy, maxY: uy + 2 });
   box(woodMat, 0.035, 1.7, 0.5, 2.93, uy + 0.95, 0.1, { cast: false });
 
+  /* ---- Sangue na cama e nas paredes ---------------------------------- */
+  function blood(w, h, x, y, z, rotX = 0, rotY = 0) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), bloodMat);
+    m.position.set(x, y, z); m.rotation.set(rotX, rotY, 0);
+    group.add(m);
+    return m;
+  }
+  blood(0.8, 0.55, 1.85, uy + 0.506, -2.35, -Math.PI / 2, 0.3);
+  blood(0.34, 0.24, 1.25, uy + 0.507, -1.75, -Math.PI / 2, -0.5);
+  blood(0.22, 0.16, 2.15, uy + 0.507, -2.85, -Math.PI / 2, 0.9);
+  blood(0.46, 0.62, 1.6, uy + 1.25, -hd + 0.13);
+  blood(0.1, 0.42, 1.45, uy + 0.78, -hd + 0.132);
+  blood(0.07, 0.3, 1.72, uy + 0.8, -hd + 0.132);
+  blood(0.42, 0.5, px + wall / 2 + 0.012, uy + 1.1, -2.15, 0, Math.PI / 2);
+  blood(0.08, 0.34, px + wall / 2 + 0.013, uy + 0.65, -2.35, 0, Math.PI / 2);
+
   // móvel baixo no corredor
   box(darkWoodMat, 0.7, 0.85, 0.45, -1.8, uy + 0.42, 2.75,
     { collide: true, minY: uy, maxY: uy + 1 });
   cyl(blackMetal, 0.005, 0.5, -1.4, uy + 2.5, -1.0, { segs: 6 });
-  const upBulb = new THREE.Mesh(
-    new THREE.SphereGeometry(0.05, 12, 10),
-    new THREE.MeshStandardMaterial({ color: 0x3f443a, roughness: 0.4 })
-  );
+  const upBulbMat = new THREE.MeshStandardMaterial({
+    color: 0x4b5043, roughness: 0.4, emissive: 0x000000,
+  });
+  const upBulb = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 10), upBulbMat);
   upBulb.position.set(-1.4, uy + 2.22, -1.0); group.add(upBulb);
+  // a lâmpada morta ainda tem um resto de corrente: pisca a cada 30 s
+  const upLamp = new THREE.PointLight(0xbfc9a8, 0, 9, 2);
+  upLamp.position.copy(upBulb.position); group.add(upLamp);
+  anim.push((t) => {
+    const phase = t % 30;
+    const on = phase < 1.6 && Math.sin(t * 34) > -0.3 && Math.sin(t * 11) > -0.55;
+    upLamp.intensity = on ? 2.4 : 0;
+    upBulbMat.emissive.setHex(on ? 0x8f9c7c : 0x000000);
+  });
 
   /* ---- Canos -------------------------------------------------------- */
   const pipeY = h - 0.23;

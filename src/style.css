@@ -22,6 +22,12 @@ body{font-family:"Courier New",Courier,monospace;cursor:default}
   background:radial-gradient(ellipse at center,transparent 38%,rgba(0,0,0,.28) 70%,rgba(0,0,0,.82) 100%);
   box-shadow:inset 0 0 160px 40px rgba(0,0,0,.7);
 }
+#scare{
+  position:fixed;inset:0;pointer-events:none;z-index:8;opacity:0;
+  background:radial-gradient(ellipse at center,rgba(120,15,10,0) 32%,rgba(130,15,10,.5) 100%);
+  transition:opacity .12s
+}
+#scare.show{opacity:1}
 
 #erro{
   position:fixed;left:12px;right:12px;bottom:12px;z-index:30;
@@ -39,11 +45,14 @@ body{font-family:"Courier New",Courier,monospace;cursor:default}
 }
 #status{
   position:absolute;left:26px;bottom:22px;font-size:11px;letter-spacing:.18em;
-  color:rgba(190,196,172,.62);text-shadow:0 1px 3px #000
+  color:rgba(190,196,172,.62);text-shadow:0 1px 3px #000;
+  max-width:calc(100% - 160px);line-height:1.9
 }
 #status .label{color:rgba(190,196,172,.32);margin-right:7px}
 #status .sep{margin:0 12px;color:rgba(190,196,172,.2)}
-#flash-state,#sound-state,#bright-state{color:var(--acid)}
+#flash-state,#sound-state,#bright-state,#battery-state,#spare-state,#key-state{color:var(--acid)}
+#battery-state.low{color:#c46754;animation:blow .42s steps(2) infinite}
+@keyframes blow{50%{opacity:.25}}
 #hint{
   position:absolute;left:50%;bottom:70px;transform:translateX(-50%);
   font-size:12px;letter-spacing:.1em;color:rgba(205,210,188,.72);
@@ -121,7 +130,18 @@ button:disabled{opacity:.45;cursor:wait}
 #pause h2{font-family:Georgia,serif;font-weight:400;font-size:30px;letter-spacing:.08em;color:#c9cdb6}
 #pause p{margin:12px 0 28px;font-size:11px;letter-spacing:.12em;color:#717969}
 
+#death,#win{
+  position:fixed;inset:0;z-index:12;display:none;align-items:center;justify-content:center;
+  text-align:center;padding:24px
+}
+#death.visible,#win.visible{display:flex}
+#death{background:radial-gradient(ellipse at center,rgba(30,5,4,.95),rgba(2,2,2,.99) 75%)}
+#win{background:radial-gradient(ellipse at center,rgba(12,18,13,.95),rgba(2,4,3,.99) 75%)}
+#death .kicker,#win .kicker{margin-bottom:14px}
+#death h2,#win h2{font-family:Georgia,serif;font-weight:400;font-size:30px;letter-spacing:.08em;color:#c9cdb6}
+#death p,#win p{margin:12px 0 28px;font-size:11px;letter-spacing:.12em;color:#717969;line-height:1.8}
+
 @media (max-width:520px){
   .controls{grid-template-columns:1fr;gap:7px 0}
-  #status{left:14px;bottom:14px;font-size:9px}
+  #status{left:14px;bottom:14px;font-size:9px;max-width:calc(100% - 140px)}
 }

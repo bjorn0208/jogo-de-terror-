@@ -12,6 +12,7 @@
 
 <div id="grain"></div>
 <div id="vignette"></div>
+<div id="scare"></div>
 
 <div id="erro" hidden></div>
 
@@ -21,6 +22,9 @@
     <span class="label">LANTERNA</span><span id="flash-state">LIGADA</span>
     <span class="sep">|</span><span class="label">SOM</span><span id="sound-state">LIGADO</span>
     <span class="sep">|</span><span class="label">BRILHO</span><span id="bright-state">100%</span>
+    <span class="sep">|</span><span class="label">PILHA</span><span id="battery-state">02:00</span>
+    <span class="sep">|</span><span class="label">RESERVAS</span><span id="spare-state">0</span>
+    <span class="sep">|</span><span class="label">CHAVE</span><span id="key-state">NÃO</span>
   </div>
   <div id="hint"></div>
 </div>
@@ -29,7 +33,7 @@
   <div class="overlay-inner">
     <div class="kicker">UMA CASA QUE NÃO DEVERIA ESTAR EM PÉ</div>
     <h1>PORÃO</h1>
-    <div class="subtitle">Você acordou aqui. Não há luz elétrica.</div>
+    <div class="subtitle">Você acordou aqui. A pilha dura dois minutos. Ache a chave e saia.</div>
     <div class="rule"></div>
     <div class="controls">
       <div><b>W A S D</b><span>mover</span></div>
@@ -38,11 +42,12 @@
       <div><b>C</b><span>agachar</span></div>
       <div><b>F</b><span>lanterna</span></div>
       <div><b>- / +</b><span>brilho da lanterna</span></div>
+      <div><b>E</b><span>usar chave</span></div>
       <div><b>M</b><span>som</span></div>
       <div><b>ESC</b><span>pausar</span></div>
     </div>
     <button id="start-btn" disabled><span id="start-label">CARREGANDO AMBIENTE...</span></button>
-    <div class="footer">Fone de ouvido recomendado. A luz da lanterna é a única coisa que ainda obedece você.</div>
+    <div class="footer">Fone de ouvido recomendado. Sem luz, ele deixa de ter medo de você. Três pilhas estão escondidas pela casa.</div>
   </div>
 </div>
 
@@ -51,6 +56,7 @@
   <div id="lookzone"></div>
   <div id="touch-buttons">
     <button id="btn-flash">LUZ</button>
+    <button id="btn-key">CHAVE</button>
     <button id="btn-run">CORRER</button>
     <button id="btn-crouch">AGACHAR</button>
     <div id="bright-row">
@@ -67,6 +73,24 @@
     <h2>Você está parado.</h2>
     <p>A casa continua respirando.</p>
     <button id="resume-btn">VOLTAR</button>
+  </div>
+</div>
+
+<div id="death" class="overlay-small">
+  <div>
+    <div class="kicker">A LUZ SE FOI</div>
+    <h2>Ele encontrou você.</h2>
+    <p id="death-detail">A última pilha morreu no escuro.</p>
+    <button id="retry-btn">TENTAR DE NOVO</button>
+  </div>
+</div>
+
+<div id="win" class="overlay-small">
+  <div>
+    <div class="kicker">O CADEADO CEDEU</div>
+    <h2>Você saiu.</h2>
+    <p id="win-detail"></p>
+    <button id="again-btn">JOGAR DE NOVO</button>
   </div>
 </div>
 

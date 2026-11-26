@@ -6,6 +6,8 @@ import { Controls } from './controls.js';
 import { HorrorAudio } from './audio.js';
 import { createComposer } from './postfx.js';
 import { createMonster } from './monster.js';
+import { createItems, BATTERY_SECONDS, MAX_SPARES } from './items.js';
+import { createRats } from './rats.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('game');
@@ -61,10 +63,23 @@ function renderFrame(time) {
   else renderer.render(scene, camera);
 }
 
-let room, atmosphere, monster, flash, spill, flashTarget, pointLight, torch, lens, glow;
+let room, atmosphere, monster, flash, spill, flashTarget, pointLight, torch, lens, glow, items, rats;
 const viewDir = new THREE.Vector3();
-let started = false, paused = false, flashOn = true, elapsed = 0;
+let started = false, paused = false, flashOn = true, elapsed = 0, finished = false;
 let flickerUntil = -1, lastHint = -99, hintTimer = 0;
+
+/* ---- Partida: pilha, chave, frases ditas uma única vez ---------------- */
+let batterySeconds = BATTERY_SECONDS, spares = 0, hasKey = false;
+let lowWarned = false, doomed = false, doomTimer = 0;
+let scareTimer = 0, shake = 0, creakStep = 0, statusClock = 0;
+const saidPhrases = new Set();
+const doorPos = new THREE.Vector3(-1.85 * SCALE, 0, 3.4 * SCALE);
+const creakMarks = [1.6, 0.2, -1.2].map((z) => z * SCALE);
+
+const fmtTime = (s) => {
+  const v = Math.max(0, Math.ceil(s));
+  return String(Math.floor(v / 60)).padStart(2, '0') + ':' + String(v % 60).padStart(2, '0');
+};
 
 // Brilho ajustável (20% a 180%). Guarda a preferência entre recarregamentos.
 let brightness = 1;
@@ -147,7 +162,7 @@ function setupFlashlight(tex) {
 }
 
 function updateFlashlight(t, bob) {
-  const on = flashOn;
+  const on = flashOn && batterySeconds > 0;
   flash.visible = on;
   spill.visible = on;
   pointLight.visible = on;
@@ -160,7 +175,12 @@ function updateFlashlight(t, bob) {
   const jitter = 1 + Math.sin(t * 17.3) * 0.005 + Math.sin(t * 31.7) * 0.003;
   let intensity = FLASH_INTENSITY * jitter;
   if (t < flickerUntil) intensity *= 0.45 + Math.random() * 0.35;
-  const power = (intensity / FLASH_INTENSITY) * brightness;
+  let power = (intensity / FLASH_INTENSITY) * brightness;
+  // aviso de pilha fraca: pisca cada vez mais antes de morrer
+  if (batterySeconds > 0 && batterySeconds <= 10) {
+    const blink = Math.sin(t * 19) > -0.2 || Math.random() < 0.03;
+    if (!blink) power *= 0.035;
+  }
   flash.intensity = FLASH_INTENSITY * power;
   spill.intensity = 5 * power;
   pointLight.intensity = 0.25 * power;
@@ -169,8 +189,10 @@ function updateFlashlight(t, bob) {
   // Alvo quase fixo: o sway mexe a lanterna na mão, não a direção do feixe.
   const sx = controls.sway.x, sy = controls.sway.y;
   flashTarget.position.set(sx * 0.4, sy * 0.4 - 0.02, -8);
-  torch.position.set(0.37 + sx * 0.5, -0.33 + sy * 0.5 + bob.bobY * 0.2, -0.52);
-  torch.rotation.set(0.05 + sy * 0.3, -0.06 + sx * 0.3, 0.05);
+  const jx = shake > 0 ? (Math.random() - 0.5) * shake * 0.12 : 0;
+  const jy = shake > 0 ? (Math.random() - 0.5) * shake * 0.1 : 0;
+  torch.position.set(0.37 + sx * 0.5 + jx, -0.33 + sy * 0.5 + bob.bobY * 0.2 + jy, -0.52);
+  torch.rotation.set(0.05 + sy * 0.3 + jy, -0.06 + sx * 0.3 + jx, 0.05 + jx);
 
   // passos fazem o feixe tremer só um pouco
   flash.position.set(0.1 + bob.bobX * 0.15, -0.1 + bob.bobY * 0.1, -0.08);
@@ -184,12 +206,23 @@ function showHint(text, seconds = 5) {
   hintTimer = seconds;
 }
 
+/** Frase de história: aparece no máximo uma vez por partida. */
+function showPhrase(id, text, seconds = 4) {
+  if (saidPhrases.has(id)) return;
+  saidPhrases.add(id);
+  showHint(text, seconds);
+}
+
 function updateStatus() {
   $('flash-state').textContent = flashOn ? 'LIGADA' : 'DESLIGADA';
   $('sound-state').textContent = audio.muted ? 'MUTADO' : 'LIGADO';
   const pct = Math.round(brightness * 100) + '%';
   $('bright-state').textContent = pct;
   $('bright-value').textContent = pct;
+  $('battery-state').textContent = fmtTime(batterySeconds);
+  $('battery-state').classList.toggle('low', batterySeconds <= 10 && batterySeconds > 0);
+  $('spare-state').textContent = String(spares);
+  $('key-state').textContent = hasKey ? 'SIM' : 'NÃO';
 }
 
 function toggleFlash() {
@@ -197,7 +230,7 @@ function toggleFlash() {
   audio.click(flashOn);
   $('btn-flash')?.classList.toggle('active', flashOn);
   updateStatus();
-  if (!flashOn) showHint('A escuridão não tem paciência.', 3);
+  if (!flashOn) showPhrase('dark', 'A escuridão não tem paciência.', 3);
 }
 
 function toggleSound() {
@@ -212,21 +245,135 @@ function adjustBrightness(delta) {
   showHint('BRILHO ' + Math.round(brightness * 100) + '%', 1.2);
 }
 
+/* ---- Regras da partida ------------------------------------------------ */
+function updateBattery(dt) {
+  if (!flashOn || batterySeconds <= 0) return;
+  batterySeconds = Math.max(0, batterySeconds - dt);
+  if (batterySeconds <= 10 && !lowWarned) {
+    lowWarned = true;
+    audio.click(false);
+    showPhrase('low', 'A pilha está acabando. A luz falha.', 4);
+  }
+  if (batterySeconds > 0) return;
+
+  if (spares > 0) {
+    spares--;
+    batterySeconds = BATTERY_SECONDS;
+    lowWarned = false;
+    flickerUntil = elapsed + 0.35;
+    audio.pickup();
+    showPhrase('swap', 'Troquei de pilha. Por pouco.', 3);
+  } else {
+    doomed = true;
+    doomTimer = 4.5;
+    audio.growl();
+    showPhrase('dead', 'A pilha morreu. Passos se aproximam.', 5);
+  }
+}
+
+function checkPickups() {
+  if (!items) return;
+  const p = camera.position;
+  const near = (v, r) => (p.x - v.x) ** 2 + (p.z - v.z) ** 2 < r * r;
+
+  for (const b of items.batteries) {
+    if (b.taken || !near(b.position, 1.1)) continue;
+    b.taken = true;
+    b.mesh.visible = false;
+    spares = Math.min(MAX_SPARES, spares + 1);
+    audio.pickup();
+    showPhrase('findBattery', 'Uma pilha. Guardei para depois.', 3);
+    if (doomed) {
+      doomed = false;
+      batterySeconds = BATTERY_SECONDS;
+      lowWarned = false;
+      showPhrase('saved', 'A luz voltou. Ele recuou.', 4);
+    }
+  }
+
+  if (!items.key.taken && near(items.key.position, 1.1)) {
+    items.key.taken = true;
+    items.key.mesh.visible = false;
+    hasKey = true;
+    audio.pickup();
+    showPhrase('findKey', 'A chave do cadeado. Enfim.', 4);
+  }
+
+  items.papers.forEach((note, i) => {
+    if (note.read || !near(note.position, 1.5)) return;
+    note.read = true;
+    audio.paper();
+    showPhrase('note' + i, note.text, 7);
+  });
+}
+
+function checkStairCreaks() {
+  const p = camera.position;
+  if (p.x < -3.85 * SCALE || p.x > -2.65 * SCALE) return;
+  if (p.z > 3.0 * SCALE || controls.floorY <= 0.05) { creakStep = 0; return; }
+  if (creakStep < creakMarks.length && p.z <= creakMarks[creakStep]) {
+    audio.creak();
+    creakStep++;
+  }
+}
+
+function tryUseKey() {
+  if (!started || finished || !items) return;
+  const p = camera.position;
+  const dist = Math.hypot(p.x - doorPos.x, p.z - doorPos.z);
+  if (!hasKey) {
+    showPhrase('needKey', 'O cadeado está fechado. Preciso da chave.', 4);
+    return;
+  }
+  if (dist > 3.5) {
+    showPhrase('exitFront', 'A porta de saída fica na parede da frente.', 4);
+    return;
+  }
+  audio.unlock();
+  items.padlock.visible = false;
+  finished = true;
+  started = false;
+  controls.enabled = false;
+  $('win-detail').textContent = 'Ainda restavam ' + fmtTime(batterySeconds) + ' de pilha e ' + spares + ' reservas.';
+  $('win').classList.add('visible');
+  hud.classList.remove('visible');
+  if (!isTouch && document.pointerLockElement) document.exitPointerLock();
+}
+
+function gameOver(detail) {
+  if (finished) return;
+  finished = true;
+  started = false;
+  paused = true;
+  controls.enabled = false;
+  audio.growl();
+  $('death-detail').textContent = detail;
+  $('death').classList.add('visible');
+  hud.classList.remove('visible');
+  if (!isTouch && document.pointerLockElement) document.exitPointerLock();
+}
+
+function onScare() {
+  scareTimer = 0.25;
+  shake = 0.5;
+  $('scare').classList.add('show');
+}
+
 function maybeHint() {
   const p = camera.position;
-  if (elapsed - lastHint < 14) return;
+  if (elapsed - lastHint < 8) return;
   if (controls.floorY > 2.5 * SCALE) {
-    showHint('O corredor cheira a mofo. O quarto está mais adiante.', 4);
+    showPhrase('upper', 'O corredor cheira a mofo. O quarto está mais adiante.', 4);
     lastHint = elapsed;
     return;
   }
   if (Math.abs(p.x + 3.25 * SCALE) < 0.7 * SCALE && p.z > 2.3 * SCALE && p.z < 3.3 * SCALE) {
-    showHint('Uma escada. As tábuas parecem firmes.', 4);
+    showPhrase('stairs', 'Uma escada. As tábuas parecem firmes.', 4);
     lastHint = elapsed;
     return;
   }
   if (Math.abs(p.x + 1.85 * SCALE) < 1.2 * SCALE && p.z > 2.75 * SCALE) {
-    showHint('A porta não abre. Ainda.', 4);
+    showPhrase('lockedDoor', 'A porta não abre. Ainda.', 4);
     lastHint = elapsed;
   }
 }
@@ -249,8 +396,14 @@ async function build() {
 
     atmosphere = createAtmosphere(scene, camera, tex, ROOM, lowEnd);
     setupFlashlight(tex);
+    items = createItems(scene);
+    rats = createRats(scene, audio);
+    rats.onScare = onScare;
     monster = createMonster(scene, audio, room.colliders);
-    monster.onAttack = () => showHint('ALGO PASSOU MUITO PERTO.', 3);
+    monster.onAttack = () => {
+      if (doomed) gameOver('Sem luz, ele não precisou mais se esconder.');
+      else showPhrase('attack', 'ALGO PASSOU MUITO PERTO.', 3);
+    };
     controls.reset(room.spawn);
     post?.setSize(window.innerWidth, window.innerHeight);
 
@@ -281,7 +434,44 @@ function startGame() {
   clock.getDelta();
 }
 
+/** Começa uma partida nova sem voltar ao menu. */
+function restartGame() {
+  if (!room) return;
+  $('death').classList.remove('visible');
+  $('win').classList.remove('visible');
+  $('scare').classList.remove('show');
+  batterySeconds = BATTERY_SECONDS; spares = 0; hasKey = false;
+  lowWarned = false; doomed = false; doomTimer = 0;
+  scareTimer = 0; shake = 0; creakStep = 0; statusClock = 0;
+  flickerUntil = -1;
+  saidPhrases.clear();
+  finished = false;
+
+  if (items) {
+    for (const b of items.batteries) { b.taken = false; b.mesh.visible = true; }
+    items.key.taken = false; items.key.mesh.visible = true;
+    for (const note of items.papers) note.read = false;
+    items.padlock.visible = true;
+  }
+  monster?.reset?.();
+  flashOn = true;
+  $('btn-flash')?.classList.add('active');
+
+  controls.reset(room.spawn);
+  controls.enabled = true;
+  started = true;
+  paused = false;
+  hud.classList.add('visible');
+  audio.resume();
+  updateStatus();
+  showPhrase('restart', 'De novo. Dessa vez, não perca a luz.', 5);
+  if (!isTouch) controls.requestLock();
+  clock.getDelta();
+}
+
 startBtn.addEventListener('click', startGame);
+$('retry-btn').addEventListener('click', restartGame);
+$('again-btn').addEventListener('click', restartGame);
 $('resume-btn').addEventListener('click', () => {
   if (isTouch) { paused = false; pauseEl.classList.remove('visible'); controls.enabled = true; }
   else controls.requestLock();
@@ -301,6 +491,7 @@ document.addEventListener('pointerlockchange', () => {
 if (isTouch) {
   controls.bindTouch($('stick'), $('stick-knob'), $('lookzone'));
   $('btn-flash').addEventListener('click', toggleFlash);
+  $('btn-key').addEventListener('click', tryUseKey);
   $('btn-dim').addEventListener('click', (e) => { e.preventDefault(); adjustBrightness(-0.1); });
   $('btn-lumen').addEventListener('click', (e) => { e.preventDefault(); adjustBrightness(0.1); });
   const run = $('btn-run'), crouch = $('btn-crouch');
@@ -337,27 +528,46 @@ function animate() {
   if (started && !paused) {
     bob = controls.update(dt);
     audio.update(dt);
+    updateBattery(dt);
+    checkPickups();
+    checkStairCreaks();
     camera.getWorldDirection(viewDir);
-    monster?.update(dt, camera.position, viewDir, flashOn);
-    maybeHint();
-    if (hintTimer > 0) {
-      hintTimer -= dt;
-      if (hintTimer <= 0) hintEl.classList.remove('show');
+    const lightOn = flashOn && batterySeconds > 0;
+    monster?.update(dt, camera.position, viewDir, lightOn, doomed);
+    if (doomed) {
+      doomTimer -= dt;
+      if (doomTimer <= 0) gameOver('Sem luz, ele encontrou você no escuro.');
     }
+    rats?.update(dt, camera.position);
+    maybeHint();
+
+    statusClock += dt;
+    if (statusClock >= 0.25) { statusClock = 0; updateStatus(); }
   } else if (room) {
     // leve oscilação da câmera enquanto o menu está na tela
     camera.position.y = 1.62 + Math.sin(elapsed * 0.6) * 0.012;
   }
 
+  if (hintTimer > 0) {
+    hintTimer -= dt;
+    if (hintTimer <= 0) hintEl.classList.remove('show');
+  }
+  if (scareTimer > 0) {
+    scareTimer -= dt;
+    if (scareTimer <= 0) $('scare').classList.remove('show');
+  }
+  if (shake > 0) shake = Math.max(0, shake - dt * 1.6);
+
   if (controls.consume('flash')) toggleFlash();
   if (controls.consume('sound')) toggleSound();
   if (controls.consume('brightDown')) adjustBrightness(-0.1);
   if (controls.consume('brightUp')) adjustBrightness(0.1);
+  if (controls.consume('interact')) tryUseKey();
 
   if (room) {
     room.update(elapsed);
     updateFlashlight(elapsed, bob);
-    atmosphere.update(elapsed, flashOn, brightness);
+    atmosphere.update(elapsed, flashOn && batterySeconds > 0, brightness);
   }
   renderFrame(elapsed);
 }

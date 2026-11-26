@@ -195,6 +195,59 @@ export class HorrorAudio {
     src.start(t); src.stop(t + 1.8);
   }
 
+  /** Guincho curto e agudo de rato. */
+  squeak() {
+    if (!this.ready || this.muted) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    for (let i = 0; i < 2; i++) {
+      const o = ctx.createOscillator(); o.type = 'sine';
+      const at = t + i * 0.09;
+      o.frequency.setValueAtTime(1500 + Math.random() * 500, at);
+      o.frequency.exponentialRampToValueAtTime(700 + Math.random() * 200, at + 0.07);
+      const g = ctx.createGain(); this._env(g, at, 0.075, 0.004, 0.07);
+      o.connect(g); this._route(g, 0.5);
+      o.start(at); o.stop(at + 0.13);
+    }
+  }
+
+  /** Estalo metálico ao pegar um objeto ou trocar a pilha. */
+  pickup() {
+    if (!this.ready || this.muted) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    for (const [f, at] of [[820, 0], [1240, 0.07]]) {
+      const o = ctx.createOscillator(); o.type = 'triangle';
+      o.frequency.setValueAtTime(f, t + at);
+      const g = ctx.createGain(); this._env(g, t + at, 0.045, 0.003, 0.12);
+      o.connect(g); this._route(g, 0.45);
+      o.start(t + at); o.stop(t + at + 0.16);
+    }
+  }
+
+  /** Folha de papel sendo puxada. */
+  paper() {
+    if (!this.ready || this.muted) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    const src = ctx.createBufferSource(); src.buffer = this.noiseBuf;
+    src.playbackRate.value = 1.6;
+    const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1100;
+    const g = ctx.createGain(); this._env(g, t, 0.045, 0.02, 0.28);
+    src.connect(hp); hp.connect(g); this._route(g, 0.3);
+    src.start(t); src.stop(t + 0.35);
+  }
+
+  /** Cadeado abrindo. */
+  unlock() {
+    if (!this.ready || this.muted) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    for (const [f, at] of [[480, 0], [760, 0.11], [1140, 0.23]]) {
+      const o = ctx.createOscillator(); o.type = 'square';
+      o.frequency.setValueAtTime(f, t + at);
+      const g = ctx.createGain(); this._env(g, t + at, 0.035, 0.002, 0.1);
+      o.connect(g); this._route(g, 0.6);
+      o.start(t + at); o.stop(t + at + 0.14);
+    }
+  }
+
   update(dt) {
     if (!this.ready || this.muted) return;
     this.time += dt;

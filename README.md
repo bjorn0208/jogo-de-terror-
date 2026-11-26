@@ -19,14 +19,21 @@ sem internet). Clique em **ENTRAR NO PORÃO**.
 | `C` | agachar |
 | `F` | ligar/desligar a lanterna |
 | `-` / `+` | diminuir/aumentar o brilho (20% a 180%) |
+| `E` | usar a chave na porta de saída |
 | `M` | ligar/desligar o som |
 | `Esc` | pausar |
 
 No celular: joystick à esquerda, arraste à direita para olhar e botões de
-luz/correr/agachar, mais `−` / `+` para o brilho.
+luz/chave/correr/agachar, mais `−` / `+` para o brilho.
+
+**Objetivo:** cada pilha dura 2 minutos. Com 10 segundos restantes a luz começa
+a piscar. Há no máximo 3 pilhas reservas escondidas pela casa; quando a atual
+morre, a reserva entra automaticamente. Se acabar a última pilha, o monstro vem
+e te mata. Para sair, ache a **chave do cadeado** (escondida perto da cama no
+andar de cima) e use-a na porta de saída com `E` / botão **CHAVE**.
 
 Use fone de ouvido: o áudio é gerado em tempo real (drone grave, passos com
-eco de porão, goteiras e rangidos).
+eco de porão, goteiras, rangidos da escada e guinchos de rato).
 
 ## O que já existe
 
@@ -51,13 +58,21 @@ eco de porão, goteiras e rangidos).
 - Colisão com paredes e objetos, passo com head-bob, agachamento e corrida.
 - Áudio procedural com reverberação sintética de porão.
 - Um monstro que **avança quando você não está olhando** e congela quando a
-  lanterna o pega. Opcionalmente carrega `assets/monster.glb` (coloque o modelo
-  do Hyper3D lá com esse nome); sem arquivo, usa uma silhueta provisória.
+  lanterna o pega. Sem luz, ele caça direto. Opcionalmente carrega
+  `assets/monster.glb` (coloque o modelo do Hyper3D lá com esse nome); sem
+  arquivo, usa uma silhueta provisória.
+- **Pilhas limitadas**: 2 min cada, aviso de 10 s piscando e troca automática
+  das reservas. HUD mostra tempo restante, reservas e se você já tem a chave.
+- **Chave + cadeado** na única porta de saída: sem a chave ela não abre; com ela
+  você vence. As frases da história aparecem **no máximo uma vez por partida**.
+- **Pistas em papéis** espalhados pela casa, sangue na cama e nas paredes do
+  quarto, ratos que dão sustos curtos com guincho e flash vermelho, rangidos ao
+  subir a escada e uma lâmpada do andar de cima que pisca a cada 30 segundos.
 
 ## No celular
 
 Detecção automática de toque: joystick à esquerda, arraste à direita para
-olhar, botões de luz/correr/agachar e `−` / `+` de brilho. Também reduz
+olhar, botões de luz/chave/correr/agachar e `−` / `+` de brilho. Também reduz
 resolução das texturas (256 px), sombra (512 px) e desliga antialias para o
 jogo carregar e rodar mais rápido. O pós-processamento tem fallback para
 render direto caso o aparelho não suporte.
@@ -82,13 +97,13 @@ bun run check   # checagem de sintaxe
 - `src/audio.js` — sons sintetizados.
 - `src/postfx.js` — correção de cor e filme.
 - `src/monster.js` — monstro e carregamento opcional do `.glb`.
+- `src/items.js` — pilhas, chave, papéis e cadeado.
+- `src/rats.js` — sustos com ratos.
 - `assets/` — onde colocar `monster.glb`.
 - `src/index.template.html` / `src/style.css` — interface.
 
 ## Próximos passos sugeridos
 
-1. Abrir a porta/escada e criar o corredor (continuação da casa).
-2. Inimigo com IA simples que só se move quando você não está olhando.
-3. Sistema de pilha da lanterna e baterias espalhadas pelo cenário.
-4. Diálogo/estrofe de texto e quebra gradual da sanidade.
-5. Interação com objetos (`E`) e um inventário mínimo.
+1. Quebra gradual da sanidade (visão/distorted audio conforme o tempo passa).
+2. Mais esconde-esconde: armários onde se esconder do monstro.
+3. Dificuldade ajustável (duração da pilha e velocidade do monstro).

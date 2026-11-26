@@ -46,6 +46,7 @@ export class Controls {
       this.keys.add(k);
       if (e.repeat) return;
       if (k === 'KeyF') this.actions.add('flash');
+      if (k === 'KeyE') this.actions.add('interact');
       if (k === 'KeyM') this.actions.add('sound');
       if (k === 'KeyC') this.crouch = !this.crouch;
       if (k === 'Minus' || k === 'NumpadSubtract' || k === 'BracketLeft') this.actions.add('brightDown');

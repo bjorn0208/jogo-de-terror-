@@ -90,8 +90,9 @@ export function createMonster(scene, audio, colliders = []) {
 
   return {
     group,
+    reset,
     set onAttack(fn) { onAttack = fn; },
-    update(dt, playerPos, cameraDir, flashlightOn) {
+    update(dt, playerPos, cameraDir, flashlightOn, hunting = false) {
       time += dt;
       if (attackCooldown > 0) attackCooldown -= dt;
 
@@ -101,11 +102,15 @@ export function createMonster(scene, audio, colliders = []) {
       toMonster.normalize();
       // "visto" = dentro do cone da lanterna e perto o bastante
       const aim = cameraDir.dot(toMonster);
-      const seen = flashlightOn && dist < 11 && aim > 0.9;
+      const seen = !hunting && flashlightOn && dist < 11 && aim > 0.9;
 
       group.lookAt(playerPos.x, group.position.y + 0.9, playerPos.z);
 
-      if (seen) {
+      if (hunting) {
+        // sem luz ele não precisa mais se esconder: vem direto
+        state = 'stalk';
+        hiddenFor = 0;
+      } else if (seen) {
         seenFor += dt; hiddenFor = 0;
         if (state === 'stalk' && seenFor > 0.25) { state = 'frozen'; audio?.creak?.(); }
       } else {
@@ -113,13 +118,13 @@ export function createMonster(scene, audio, colliders = []) {
         if (state === 'frozen' && hiddenFor > 1.2) state = 'stalk';
       }
 
-      if (state === 'idle' && dist < 6.5 && attackCooldown <= 0) {
+      if (!hunting && state === 'idle' && dist < 6.5 && attackCooldown <= 0) {
         state = 'stalk';
         audio?.growl?.();
       }
 
       if (state === 'stalk' && dist > 0.95) {
-        const step = 0.42 * dt;
+        const step = (hunting ? 0.95 : 0.42) * dt;
         const nx = group.position.x + toMonster.x * step;
         const nz = group.position.z + toMonster.z * step;
         const mx = ROOM.w / 2 - 0.45, mz = ROOM.d / 2 - 0.45;
