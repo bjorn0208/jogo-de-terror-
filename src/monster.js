@@ -75,6 +75,8 @@ export function createMonster(scene, audio, colliders = []) {
   function blocked(x, z) {
     const r = 0.3;
     for (const c of colliders) {
+      // o monstro fica no porão; paredes do andar de cima não o travam
+      if ((c.minY ?? 0) > 0.4 || (c.maxY ?? 3) < 0.2) continue;
       if (x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ) return true;
     }
     return false;

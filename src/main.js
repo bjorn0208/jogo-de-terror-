@@ -215,6 +215,16 @@ function adjustBrightness(delta) {
 function maybeHint() {
   const p = camera.position;
   if (elapsed - lastHint < 14) return;
+  if (controls.floorY > 2.5) {
+    showHint('O corredor cheira a mofo. O quarto está mais adiante.', 4);
+    lastHint = elapsed;
+    return;
+  }
+  if (Math.abs(p.x + 3.25) < 0.7 && p.z > 2.3 && p.z < 3.3) {
+    showHint('Uma escada. As tábuas parecem firmes.', 4);
+    lastHint = elapsed;
+    return;
+  }
   if (Math.abs(p.x + 1.85) < 1.2 && p.z > 2.75) {
     showHint('A porta não abre. Ainda.', 4);
     lastHint = elapsed;
@@ -234,6 +244,8 @@ async function build() {
     await nextFrame();
     room = createRoom(scene, tex);
     controls.colliders = room.colliders;
+    controls.zones = room.zones;
+    controls.ramps = room.ramps;
 
     atmosphere = createAtmosphere(scene, camera, tex, ROOM, lowEnd);
     setupFlashlight(tex);

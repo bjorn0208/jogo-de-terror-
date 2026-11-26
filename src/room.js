@@ -35,10 +35,10 @@ export function createRoom(scene, tex) {
     return mesh;
   }
 
-  function addCollider(x, z, w, d, rotY = 0) {
+  function addCollider(x, z, w, d, rotY = 0, minY = 0, maxY = h) {
     const ex = Math.abs(Math.cos(rotY)) * w / 2 + Math.abs(Math.sin(rotY)) * d / 2;
     const ez = Math.abs(Math.sin(rotY)) * w / 2 + Math.abs(Math.cos(rotY)) * d / 2;
-    colliders.push({ minX: x - ex, maxX: x + ex, minZ: z - ez, maxZ: z + ez });
+    colliders.push({ minX: x - ex, maxX: x + ex, minZ: z - ez, maxZ: z + ez, minY, maxY });
   }
 
   function box(mat, w, h, d, x, y, z, opts = {}) {
@@ -48,7 +48,16 @@ export function createRoom(scene, tex) {
     if (opts.rotX) m.rotation.x = opts.rotX;
     if (opts.rotZ) m.rotation.z = opts.rotZ;
     register(m, opts.cast !== false, opts.receive !== false);
-    if (opts.collide) addCollider(x, z, w, d, opts.rotY || 0);
+    if (opts.collide) addCollider(x, z, w, d, opts.rotY || 0, opts.minY ?? 0, opts.maxY ?? h);
+    return m;
+  }
+
+  /** laje horizontal: up=true é piso, up=false é teto */
+  function slab(mat, x0, x1, z0, z1, y, up = false) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), mat);
+    m.rotation.x = up ? -Math.PI / 2 : Math.PI / 2;
+    m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2);
+    m.receiveShadow = true; scene.add(m);
     return m;
   }
 
@@ -66,11 +75,24 @@ export function createRoom(scene, tex) {
   const { w, d, h, wall } = ROOM;
   const hw = w / 2, hd = d / 2;
 
-  // piso e teto
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(w, d), floorMat);
-  floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceilMat);
-  ceil.rotation.x = Math.PI / 2; ceil.position.y = h; ceil.receiveShadow = true; scene.add(ceil);
+  // vão da escada: o teto do porão é o piso do andar de cima
+  const stairX0 = -3.85, stairX1 = -2.65;
+  const stairZ0 = -1.75, stairZ1 = 2.85;
+  const upperY = h;
+
+  slab(floorMat, -hw, hw, -hd, hd, 0, true);
+
+  const slabs = [
+    [-hw, stairX0, -hd, hd],
+    [stairX1, hw, -hd, hd],
+    [stairX0, stairX1, -hd, stairZ0],
+    [stairX0, stairX1, stairZ1, hd],
+  ];
+  for (const [x0, x1, z0, z1] of slabs) {
+    slab(ceilMat, x0, x1, z0, z1, upperY, false); // visto de baixo
+    slab(floorMat, x0, x1, z0, z1, upperY, true); // piso do corredor/quarto
+  }
+  slab(ceilMat, -hw, hw, -hd, hd, upperY + h, false);
 
   // paredes laterais e da frente (a de traz e recortada pela janela)
   box(wallMat, wall, h, d, -hw, h / 2, 0, { collide: true });
@@ -118,6 +140,83 @@ export function createRoom(scene, tex) {
   box(darkWoodMat, 0.05, 0.14, d, -hw + 0.14, 0.07, 0, { cast: false });
   box(darkWoodMat, 0.05, 0.14, d, hw - 0.14, 0.07, 0, { cast: false });
 
+  /* ---- Escada -------------------------------------------------------- */
+  const steps = 15;
+  for (let i = 0; i < steps; i++) {
+    const t0 = i / steps, t1 = (i + 1) / steps;
+    const zFront = stairZ1 - t0 * (stairZ1 - stairZ0);
+    const zBack = stairZ1 - t1 * (stairZ1 - stairZ0);
+    const top = Math.max(0.02, upperY * t0);
+    box(darkWoodMat, stairX1 - stairX0 - 0.06, top, zFront - zBack,
+      (stairX0 + stairX1) / 2, top / 2, (zFront + zBack) / 2, { cast: false });
+    box(blackMetal, stairX1 - stairX0 - 0.06, 0.04, 0.035,
+      (stairX0 + stairX1) / 2, top, zBack + 0.02, { cast: false });
+  }
+  // paredes laterais do poço da escada (só até o piso de cima)
+  box(wallMat, 0.08, upperY, stairZ1 - stairZ0, stairX0, upperY / 2, (stairZ0 + stairZ1) / 2,
+    { collide: true, minY: 0, maxY: upperY });
+  box(wallMat, 0.08, upperY, stairZ1 - stairZ0, stairX1, upperY / 2, (stairZ0 + stairZ1) / 2,
+    { collide: true, minY: 0, maxY: upperY });
+
+  /* ---- Andar de cima: corredor + quarto ------------------------------ */
+  const uy = upperY, uh = h;
+
+  // paredes externas do andar de cima
+  box(wallMat, wall, uh, d, -hw, uy + uh / 2, 0, { collide: true, minY: uy, maxY: uy + uh });
+  box(wallMat, wall, uh, d, hw, uy + uh / 2, 0, { collide: true, minY: uy, maxY: uy + uh });
+  box(wallMat, w, uh, wall, 0, uy + uh / 2, hd, { collide: true, minY: uy, maxY: uy + uh });
+  box(wallMat, w, uh, wall, 0, uy + uh / 2, -hd, { collide: true, minY: uy, maxY: uy + uh });
+
+  // divisão corredor/quarto, com vão de porta em z = -1.4 .. -0.3
+  const px = -0.7, doorZ0 = -1.4, doorZ1 = -0.3;
+  box(wallMat, wall, uh, doorZ0 + hd, px, uy + uh / 2, (-hd + doorZ0) / 2,
+    { collide: true, minY: uy, maxY: uy + uh });
+  box(wallMat, wall, uh, 1.2 - doorZ1, px, uy + uh / 2, (doorZ1 + 1.2) / 2,
+    { collide: true, minY: uy, maxY: uy + uh });
+  box(wallMat, wall, uh - 2.0, doorZ1 - doorZ0, px, uy + 2.0 + (uh - 2.0) / 2, (doorZ0 + doorZ1) / 2,
+    { collide: true, minY: uy + 2.0, maxY: uy + uh });
+  // batente e verga
+  box(darkWoodMat, 0.1, 2.0, 0.08, px, uy + 1.0, doorZ0 - 0.04, { cast: false });
+  box(darkWoodMat, 0.1, 2.0, 0.08, px, uy + 1.0, doorZ1 + 0.04, { cast: false });
+  box(darkWoodMat, 0.1, 0.1, doorZ1 - doorZ0, px, uy + 2.02, (doorZ0 + doorZ1) / 2, { cast: false });
+
+  // frente do quarto (o corredor segue até a parede da frente)
+  box(wallMat, hw - px, uh, wall, (px + hw) / 2, uy + uh / 2, 1.2,
+    { collide: true, minY: uy, maxY: uy + uh });
+
+  // janela emparedada no quarto
+  const upWin = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.1, 0.7),
+    new THREE.MeshBasicMaterial({ color: 0x070b09, fog: false })
+  );
+  upWin.position.set(2.3, uy + 2.15, -hd + 0.13); scene.add(upWin);
+  for (let i = 0; i < 3; i++) {
+    box(darkWoodMat, 1.22, 0.11, 0.06, 2.3, uy + 1.87 + i * 0.28, -hd + 0.17, { cast: false });
+  }
+
+  // cama, criado-mudo e guarda-roupa
+  box(darkWoodMat, 1.5, 0.28, 2.1, 1.6, uy + 0.14, -2.2,
+    { collide: true, minY: uy, maxY: uy + 1.2 });
+  box(cardboard, 1.36, 0.22, 1.95, 1.6, uy + 0.39, -2.2);
+  box(cardboardDark, 0.7, 0.12, 0.34, 1.6, uy + 0.56, -3.0);
+  box(darkWoodMat, 1.36, 0.03, 1.15, 1.6, uy + 0.53, -1.85);
+  box(darkWoodMat, 0.55, 0.6, 0.5, 3.1, uy + 0.3, -2.9,
+    { collide: true, minY: uy, maxY: uy + 0.8 });
+  box(woodMat, 0.6, 0.05, 0.55, 3.1, uy + 0.62, -2.9);
+  box(darkWoodMat, 0.9, 1.9, 1.2, 3.4, uy + 0.95, 0.1,
+    { collide: true, minY: uy, maxY: uy + 2 });
+  box(woodMat, 0.035, 1.7, 0.5, 2.93, uy + 0.95, 0.1, { cast: false });
+
+  // móvel baixo no corredor
+  box(darkWoodMat, 0.7, 0.85, 0.45, -1.8, uy + 0.42, 2.75,
+    { collide: true, minY: uy, maxY: uy + 1 });
+  cyl(blackMetal, 0.005, 0.5, -1.4, uy + 2.5, -1.0, { segs: 6 });
+  const upBulb = new THREE.Mesh(
+    new THREE.SphereGeometry(0.05, 12, 10),
+    new THREE.MeshStandardMaterial({ color: 0x3f443a, roughness: 0.4 })
+  );
+  upBulb.position.set(-1.4, uy + 2.22, -1.0); scene.add(upBulb);
+
   /* ---- Canos -------------------------------------------------------- */
   const pipeY = h - 0.23;
   cyl(metalMat, 0.065, w - 0.4, 0, pipeY, -2.45, { axis: 'x', segs: 14 });
@@ -148,7 +247,7 @@ export function createRoom(scene, tex) {
   addCollider(3.15, -2.75, 0.8, 0.8);
 
   /* ---- Prateleira na parede esquerda -------------------------------- */
-  const sx = -3.75, sz = -0.85, sw = 2.6, sd = 0.46;
+  const sx = -3.75, sz = -2.65, sw = 1.4, sd = 0.46;
   for (const zz of [sz - sw / 2, sz + sw / 2]) box(darkWoodMat, sd, 2.25, 0.05, sx, 1.13, zz);
   for (const yy of [0.12, 0.66, 1.2, 1.74, 2.23]) box(woodMat, sd, 0.045, sw, sx, yy, sz);
   box(darkWoodMat, 0.03, 2.25, sw, sx - sd / 2, 1.13, sz, { cast: false });
@@ -200,7 +299,7 @@ export function createRoom(scene, tex) {
 
   /* ---- Caixas empilhadas -------------------------------------------- */
   const stacks = [
-    [-2.9, 2.55, 3], [-2.2, 2.7, 2], [2.65, 2.55, 2], [1.9, -2.9, 1],
+    [-1.75, 2.85, 2], [0.95, 2.9, 1], [2.65, 2.55, 2], [1.9, -2.9, 1],
   ];
   for (const [x, z, n] of stacks) {
     for (let i = 0; i < n; i++) {
@@ -284,6 +383,7 @@ export function createRoom(scene, tex) {
   for (let i = 0; i < 55; i++) {
     const x = (r() - 0.5) * (w - 0.8), z = (r() - 0.5) * (d - 0.8);
     if (Math.abs(x) < 1.0 && z > 1.0) continue; // area de spawn
+    if (x > stairX0 - 0.2 && x < stairX1 + 0.2 && z > stairZ0 - 0.2 && z < stairZ1 + 0.2) continue;
     const s = 0.05 + r() * 0.13;
     const m = box(brick, s * (0.8 + r()), s * 0.6, s, x, s * 0.3, z, {
       rotY: r() * Math.PI, rotZ: (r() - 0.5) * 0.4, cast: false,
@@ -298,7 +398,23 @@ export function createRoom(scene, tex) {
 
   return {
     colliders,
+    zones: [
+      // corredor ( dividido para não “puxar” o jogador para o andar de cima
+      // quando ele estiver embaixo, na boca da escada )
+      { minX: -hw + 0.2, maxX: stairX0, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY },
+      { minX: stairX0, maxX: stairX1, minZ: -hd + 0.2, maxZ: stairZ0, y: upperY },
+      { minX: stairX1, maxX: -0.7, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY },
+      // quarto
+      { minX: -0.7, maxX: hw - 0.2, minZ: -hd + 0.2, maxZ: 1.2, y: upperY },
+      // porão
+      { minX: -hw, maxX: hw, minZ: -hd, maxZ: hd, y: 0 },
+    ],
+    ramps: [{
+      minX: stairX0, maxX: stairX1,
+      zMin: stairZ0, zMax: stairZ1,
+      yBottom: 0, yTop: upperY, steps,
+    }],
     update(t) { for (const fn of anim) fn(t); },
-    spawn: { x: 0, z: 2.15, yaw: 0 }, // olhando para a janela (parede do fundo)
+    spawn: { x: 0, z: 2.15, y: 0, yaw: 0 }, // olhando para a janela (parede do fundo)
   };
 }

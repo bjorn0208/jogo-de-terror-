@@ -30,10 +30,12 @@ eco de porão, goteiras e rangidos).
 
 ## O que já existe
 
-- Quarto/casa de baixo de ~8 × 7 m com paredes e piso de concreto, teto,
-  janela gradeada, porta trancada, canos, caldeira, prateleiras com caixas e
-  potes, bancada com ferramentas, cadeira tombada, entulho, poças, manchas e
-  teias de aranha.
+- Porão de ~8 × 7 m com paredes e piso de concreto, janela gradeada, porta
+  trancada, canos, caldeira, prateleiras, bancada, cadeira tombada, entulho,
+  poças, manchas e teias.
+- Escada de 15 degraus até um **andar superior** com corredor e quarto (cama,
+  criado-mudo, guarda-roupa, janela emparedada e lâmpada morta). O jogador sobe
+  e desce com altura de piso interpolada; as colisões são separadas por andar.
 - **Texturas 100% procedurais**: cor, normal e rugosidade geradas em canvas
   (umidade, rachaduras, ferrugem, veios de madeira, cascalho). Nenhum asset
   externo é baixado.

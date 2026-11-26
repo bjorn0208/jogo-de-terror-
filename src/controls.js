@@ -25,6 +25,11 @@ export class Controls {
     this.onFootstep = null;
     this._tmp = new THREE.Vector2();
 
+    //levels: zonas andar a andar + rampas de escada
+    this.zones = [];
+    this.ramps = [];
+    this.floorY = 0;
+
     this._onMouse = (e) => {
       if (!this.enabled) return;
       const s = 0.0021;
@@ -106,7 +111,8 @@ export class Controls {
   }
 
   reset(spawn) {
-    this.baseEye = this.eyeHeight;
+    this.floorY = spawn.y || 0;
+    this.baseEye = this.floorY + this.eyeHeight;
     this.camera.position.set(spawn.x, this.baseEye, spawn.z);
     this.touchMove.x = this.touchMove.y = 0;
     this.yaw = spawn.yaw || 0;
@@ -126,9 +132,29 @@ export class Controls {
     return false;
   }
 
-  blocked(x, z) {
+  /** Altura do piso sob (x,z): rampas primeiro, depois zonas de cada andar. */
+  sampleFloor(x, z) {
+    for (const r of this.ramps) {
+      if (x >= r.minX && x <= r.maxX && z >= r.zMin && z <= r.zMax) {
+        const t = Math.max(0, Math.min(1, (r.zMax - z) / (r.zMax - r.zMin)));
+        // degraus: piso sobe de vez em quando, não como rampa lisa
+        const f = r.steps ? Math.min(r.steps, Math.floor(t * r.steps)) / r.steps : t;
+        return r.yBottom + (r.yTop - r.yBottom) * f;
+      }
+    }
+    for (const zone of this.zones) {
+      // só usa zonas do andar de cima depois que a escada já subiu o jogador
+      if (zone.y > 1 && this.floorY < 1) continue;
+      if (x >= zone.minX && x <= zone.maxX && z >= zone.minZ && z <= zone.maxZ) return zone.y;
+    }
+    return this.floorY;
+  }
+
+  blocked(x, z, feetY = this.floorY) {
     const r = this.radius;
+    const headY = feetY + this.eyeHeight;
     for (const c of this.colliders) {
+      if (headY <= (c.minY ?? 0) || feetY >= (c.maxY ?? 3)) continue;
       if (x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ) return true;
     }
     return false;
@@ -157,9 +183,10 @@ export class Controls {
 
     const p = this.camera.position;
     const nx = p.x + this.vel.x * dt;
-    if (!this.blocked(nx, p.z)) p.x = nx; else this.vel.x *= 0.2;
+    if (!this.blocked(nx, p.z, this.floorY)) p.x = nx; else this.vel.x *= 0.2;
     const nz = p.z + this.vel.y * dt;
-    if (!this.blocked(p.x, nz)) p.z = nz; else this.vel.y *= 0.2;
+    if (!this.blocked(p.x, nz, this.floorY)) p.z = nz; else this.vel.y *= 0.2;
+    this.floorY = this.sampleFloor(p.x, p.z);
 
     const margin = ROOM.wall / 2 + this.radius + 0.02;
     p.x = Math.max(-ROOM.w / 2 + margin, Math.min(ROOM.w / 2 - margin, p.x));
@@ -174,7 +201,8 @@ export class Controls {
     }
 
     const targetEye = this.eyeHeight * (this.crouch ? 0.64 : 1);
-    this.baseEye += (targetEye - this.baseEye) * Math.min(1, dt * 9);
+    const targetBase = this.floorY + targetEye;
+    this.baseEye += (targetBase - this.baseEye) * Math.min(1, dt * 9);
     const bobY = Math.sin(this.bob) * 0.026 * this.moving;
     p.y = this.baseEye + bobY;
     const bobX = Math.cos(this.bob * 0.5) * 0.012 * this.moving;
