@@ -665,7 +665,7 @@ for (const btn of document.querySelectorAll?.('#safe-keys [data-d]') || []) {
 $('safe-back').addEventListener('click', safeBack);
 $('safe-ok').addEventListener('click', safeSubmit);
 $('safe-close').addEventListener('click', closeSafeUI);
-$('paper-close').addEventListener('click', closePaperUI);
+$('paper').addEventListener('click', closePaperUI);
 document.addEventListener('keydown', (e) => {
   if (paperUI) {
     if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {

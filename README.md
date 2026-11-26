@@ -36,10 +36,10 @@ automaticamente. Se acabar a última pilha, você morre no escuro — o som de l
 já avisa, sem monstro.
 
 A **folha única** está pregada na parede da divisão, do lado do quarto (andar
-de cima). Ao apertar para ler, aparece **apenas a imagem** da folha suja em
-primeiro plano, sem nenhum texto adicional (`Enter`, `Espaço` ou `Esc` para
-guardar). Os quatro códigos estão na imagem, na ordem certa, e ela vem embutida
-no `index.html`, sem internet. O **cofre está em cima do criado-mudo no quarto**
+de cima). Ao apertar para ler, aparece **apenas a imagem** da folha suja
+ocupando a tela inteira, sem bordas, cabeçalho ou texto. Para guardar, toque na
+imagem (ou use `Enter`, `Espaço` ou `Esc`). Os quatro códigos estão na imagem, na
+ordem certa, e ela vem embutida no `index.html`, sem internet. O **cofre está em cima do criado-mudo no quarto**
 e guarda a chave da porta. Abra-o com `E`/**PEGAR**, digite os quatro números da
 folha, pegue a chave e desça para usar na porta de saída.
 
