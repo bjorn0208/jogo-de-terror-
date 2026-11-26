@@ -42,8 +42,8 @@ scene.add(camera);
 scene.add(new THREE.AmbientLight(0x273329, 0.075));
 scene.add(new THREE.HemisphereLight(0x182019, 0x070906, 0.05));
 
-// Queda física (decay=2) + cookie: 24 dá um hotspot presente sem estourar as bordas.
-const FLASH_INTENSITY = 24;
+// Cone mais aberto pede mais intensidade: 30 mantém o hotspot presente.
+const FLASH_INTENSITY = 30;
 
 const controls = new Controls(camera, canvas, []);
 const audio = new HorrorAudio();
@@ -106,13 +106,13 @@ function createTorch(tex) {
 
 function setupFlashlight(tex) {
   // Facho principal: hotspot definido, queda física e reflector sujo.
-  flash = new THREE.SpotLight(0xffe6bd, FLASH_INTENSITY, 18, 0.42, 0.6, 2);
+  flash = new THREE.SpotLight(0xffe6bd, FLASH_INTENSITY, 24, 0.58, 0.6, 2);
   flash.map = tex.cookie;
   flash.position.set(0.1, -0.1, -0.08);
   flash.castShadow = true;
   flash.shadow.mapSize.set(lowEnd ? 512 : 1024, lowEnd ? 512 : 1024);
   flash.shadow.camera.near = 0.06;
-  flash.shadow.camera.far = 18;
+  flash.shadow.camera.far = 24;
   flash.shadow.bias = -0.00025;
   flash.shadow.normalBias = 0.018;
   flash.shadow.radius = 2;
@@ -125,7 +125,7 @@ function setupFlashlight(tex) {
 
   // Spill largo e fraco: a luz que "escorre" do reflector ao redor do hotspot.
   // Sem sombra, custa quase nada e evita o efeito de buraco preto ao redor.
-  spill = new THREE.SpotLight(0xffe0b4, 4, 9, 0.85, 1, 2);
+  spill = new THREE.SpotLight(0xffe0b4, 5, 13, 1.0, 1, 2);
   spill.position.copy(flash.position);
   spill.target = flashTarget;
   camera.add(spill);
@@ -154,7 +154,7 @@ function updateFlashlight(t, bob) {
   let intensity = FLASH_INTENSITY * jitter;
   if (t < flickerUntil) intensity *= 0.45 + Math.random() * 0.35;
   flash.intensity = intensity;
-  spill.intensity = 4 * (intensity / FLASH_INTENSITY);
+  spill.intensity = 5 * (intensity / FLASH_INTENSITY);
   pointLight.intensity = 0.25 * (intensity / FLASH_INTENSITY);
   glow.material.opacity = 0.45 * (intensity / FLASH_INTENSITY);
 

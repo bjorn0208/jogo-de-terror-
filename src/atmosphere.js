@@ -4,8 +4,8 @@ import * as THREE from 'three';
    lanterna — luz espalhada no ar, não bruma nem partícula. */
 
 export function createAtmosphere(scene, camera, tex, roomSize, lowEnd = false) {
-  const len = 14;
-  const radius = Math.tan(0.42) * len;
+  const len = 20;
+  const radius = Math.tan(0.58) * len;
   const geo = new THREE.ConeGeometry(radius, len, lowEnd ? 14 : 28, 1, true);
   geo.translate(0, -len / 2, 0); // ponta na origem
   geo.rotateX(Math.PI / 2);      // aponta para -Z (frente da câmera)
@@ -14,7 +14,7 @@ export function createAtmosphere(scene, camera, tex, roomSize, lowEnd = false) {
     map: tex.beam,
     color: 0xffe9c4,
     transparent: true,
-    opacity: 0.035,
+    opacity: 0.04,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     side: THREE.DoubleSide,
@@ -30,7 +30,7 @@ export function createAtmosphere(scene, camera, tex, roomSize, lowEnd = false) {
     beam,
     update(time, flashlightOn) {
       beam.visible = flashlightOn;
-      mat.opacity = 0.035 + Math.sin(time * 7.3) * 0.001 + Math.sin(time * 2.1) * 0.0015;
+      mat.opacity = 0.04 + Math.sin(time * 7.3) * 0.001 + Math.sin(time * 2.1) * 0.0015;
     },
   };
 }
