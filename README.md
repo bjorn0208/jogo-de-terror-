@@ -19,18 +19,25 @@ sem internet). Clique em **ENTRAR NO PORÃO**.
 | `C` | agachar |
 | `F` | ligar/desligar a lanterna |
 | `-` / `+` | diminuir/aumentar o brilho (20% a 180%) |
-| `E` | usar a chave na porta de saída |
+| `E` | pegar / interagir (perto de objetos) |
+| `0-9`, `Enter`, `Backspace` | digitar o código do cofre |
 | `M` | ligar/desligar o som |
 | `Esc` | pausar |
 
 No celular: joystick à esquerda, arraste à direita para olhar e botões de
-luz/chave/correr/agachar, mais `−` / `+` para o brilho.
+luz/**PEGAR**/correr/agachar, mais `−` / `+` para o brilho. O botão **PEGAR**
+muda de texto conforme o objeto próximo (pegar pilha, ler folha, abrir cofre,
+usar chave).
 
 **Objetivo:** cada pilha dura 2 minutos. Com 10 segundos restantes a luz começa
-a piscar. Há no máximo 3 pilhas reservas escondidas pela casa; quando a atual
-morre, a reserva entra automaticamente. Se acabar a última pilha, o monstro vem
-e te mata. Para sair, ache a **chave do cadeado** (escondida perto da cama no
-andar de cima) e use-a na porta de saída com `E` / botão **CHAVE**.
+a piscar. Há 3 pilhas escondidas: uma em cima da cama, outra no fundo do último
+cômodo e outra ao lado da porta de saída. Quando a atual morre, a reserva entra
+automaticamente. Se acabar a última pilha, o monstro vem e te mata.
+
+As **folhas** são as pistas do cofre: cada uma tem um número destacado no meio
+do texto e diz qual posição ele ocupa. O **cofre está em cima da bancada na sala
+de baixo** e guarda a chave da porta. Abra-o com `E`/**PEGAR**, digite os
+quatro números na ordem das folhas, pegue a chave e use-a na porta de saída.
 
 Use fone de ouvido: o áudio é gerado em tempo real (drone grave, passos com
 eco de porão, goteiras, rangidos da escada e guinchos de rato).
@@ -63,16 +70,20 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   arquivo, usa uma silhueta provisória.
 - **Pilhas limitadas**: 2 min cada, aviso de 10 s piscando e troca automática
   das reservas. HUD mostra tempo restante, reservas e se você já tem a chave.
+- **Cofre com senha** sobre a bancada da sala de baixo: cinco folhas com números
+  destacados no meio do texto ensinam os quatro dígitos e a ordem. Ao abrir, a
+  chave aparece dentro dele.
 - **Chave + cadeado** na única porta de saída: sem a chave ela não abre; com ela
-  você vence. As frases da história aparecem **no máximo uma vez por partida**.
-- **Pistas em papéis** espalhados pela casa, sangue na cama e nas paredes do
-  quarto, ratos que dão sustos curtos com guincho e flash vermelho, rangidos ao
-  subir a escada e uma lâmpada do andar de cima que pisca a cada 30 segundos.
+  você vence. As frases automáticas da história aparecem **no máximo uma vez por
+  partida** (as folhas podem ser relidas, pois são ação direta do jogador).
+- Sangue na cama e nas paredes do quarto, ratos que dão sustos curtos com
+  guincho e flash vermelho, rangidos ao subir a escada e uma lâmpada do andar de
+  cima que pisca a cada 30 segundos.
 
 ## No celular
 
 Detecção automática de toque: joystick à esquerda, arraste à direita para
-olhar, botões de luz/chave/correr/agachar e `−` / `+` de brilho. Também reduz
+olhar, botões de luz/PEGAR/correr/agachar e `−` / `+` de brilho. Também reduz
 resolução das texturas (256 px), sombra (512 px) e desliga antialias para o
 jogo carregar e rodar mais rápido. O pós-processamento tem fallback para
 render direto caso o aparelho não suporte.

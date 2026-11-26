@@ -3,9 +3,11 @@ import { SCALE } from './room.js';
 
 export const BATTERY_SECONDS = 120;
 export const MAX_SPARES = 3;
+// Código do cofre: a ordem vem das quatro primeiras folhas.
+export const SAFE_CODE = '7391';
 
-/* Objetos escondidos: pilhas, a chave do cadeado, papéis com pistas
-   e o próprio cadeado na porta de saída. Tudo em coordenadas da casa
+/* Objetos escondidos: pilhas, folhas com pistas, o cofre sobre a bancada
+   do porão e o cadeado na porta de saída. Tudo em coordenadas da casa
    (BASE), escalado junto com ela. */
 
 function paperTexture() {
@@ -46,6 +48,7 @@ export function createItems(scene) {
   const wrap = new THREE.MeshStandardMaterial({ color: 0x8b6f42, roughness: 0.75, metalness: 0.2 });
   const tip = new THREE.MeshStandardMaterial({ color: 0xb9b5a4, roughness: 0.35, metalness: 0.75 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x24261f, roughness: 0.9 });
+  const steel = new THREE.MeshStandardMaterial({ color: 0x4b4f47, roughness: 0.55, metalness: 0.75 });
   const keyMat = new THREE.MeshStandardMaterial({ color: 0x9a947e, roughness: 0.4, metalness: 0.8 });
   const paperMat = new THREE.MeshStandardMaterial({
     map: paperTexture(), roughness: 1, side: THREE.DoubleSide,
@@ -66,7 +69,7 @@ export function createItems(scene) {
     return { mesh: g, position: new THREE.Vector3(x * SCALE, y * SCALE, z * SCALE), taken: false };
   }
 
-  function key(x, y, z) {
+  function key(x, y, z, visible) {
     const g = new THREE.Group();
     const shaft = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.008, 0.15), keyMat);
     g.add(shaft);
@@ -78,12 +81,13 @@ export function createItems(scene) {
     }
     g.position.set(x, y, z);
     g.rotation.y = 0.6;
+    g.visible = visible;
     g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     group.add(g);
     return { mesh: g, position: new THREE.Vector3(x * SCALE, y * SCALE, z * SCALE), taken: false };
   }
 
-  function note(x, y, z, text, rotX = -Math.PI / 2, rotY = 0) {
+  function note(x, y, z, text, number, rotX = -Math.PI / 2, rotY = 0) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.36), paperMat);
     m.position.set(x, y, z);
     m.rotation.set(rotX, rotY, 0.2);
@@ -93,38 +97,75 @@ export function createItems(scene) {
       mesh: m,
       position: new THREE.Vector3(x * SCALE, y * SCALE, z * SCALE),
       text,
+      number,
       read: false,
     };
   }
 
-  // três pilhas, bem escondidas
+  /* ---- Cofre sobre a bancada (sala de baixo) -------------------------- */
+  const safe = new THREE.Group();
+  safe.position.set(3.45, 1.11, 0.45);
+  const shell = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.36, 0.34), steel);
+  safe.add(shell);
+  const rim = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.3, 0.02), dark);
+  rim.position.z = 0.175; safe.add(rim);
+  const doorPivot = new THREE.Group();
+  doorPivot.position.set(-0.22, 0, 0.18); // dobradiça na esquerda
+  const door = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.34, 0.025), steel);
+  door.position.x = 0.22; doorPivot.add(door);
+  const dial = new THREE.Mesh(new THREE.CircleGeometry(0.045, 16), dark);
+  dial.position.set(0.3, 0.02, 0.015); doorPivot.add(dial);
+  const handle = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.1, 0.02), tip);
+  handle.position.set(0.36, -0.07, 0.02); doorPivot.add(handle);
+  safe.add(doorPivot);
+  safe.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  group.add(safe);
+
+  // três pilhas: em cima da cama, no fim do último cômodo e na porta de saída
   const batteries = [
-    battery(2.15, -3.15, 0.05, 0.4),       // atrás da caldeira
-    battery(2.72, 1.95, 0.05, -0.8),       // na ponta da bancada
-    battery(2.1, -2.6, 3.06, 1.2),         // debaixo da cama, no quarto
+    battery(1.6, -2.2, 3.52, 0.4),        // em cima da cama, no quarto
+    battery(3.5, -3.25, 3.06, -0.8),      // no fundo do último cômodo
+    battery(-1.32, 3.2, 0.05, 0.9),       // ao lado da porta de saída
   ];
 
-  // a chave do cadeado, ao lado da cama
-  const keyItem = key(0.62, 3.06, -3.12);
+  // a chave fica dentro do cofre até ele ser aberto
+  const keyItem = key(3.45, 1.11, 0.56, false);
 
-  // papéis com pistas
+  // cada folha tem um número destacado no meio do texto
   const papers = [
-    note(0.95, 0.02, 2.6, '“Três pilhas. Escondi onde a luz não chega.”'),
-    note(-2.15, 0.02, 3.05, '“O cadeado não cede. A chave subiu com ele.”'),
-    note(2.15, 2.12, -3.46, '“A lâmpada pisca de 30 em 30. Eu contava com ela.”', 0, 0),
-    note(-2.0, 3.02, -2.9, '“Quando a luz acaba, ele deixa de ter medo de você.”'),
-    note(1.05, 3.02, -1.35, '“O sangue na cama não era meu. Ainda bem.”'),
+    note(2.55, 0.02, 0.95,
+      'PRIMEIRO — o cofre quer {{n}} antes de todos os outros números.', '7'),
+    note(-2.15, 0.02, 3.05,
+      'SEGUNDO — anotei {{n}} na mesma ordem em que guardei a chave.', '3'),
+    note(2.15, 1.4, -3.46,
+      'TERCEIRO — contei até {{n}} enquanto a lâmpada piscava.', '9', 0, 0),
+    note(-2.0, 3.02, -2.9,
+      'QUARTO — depois de {{n}} vem a chave. Não pule esta.', '1'),
+    note(1.05, 3.02, -1.35,
+      'Havia {{n}} folhas. Este número é só a quantidade — o cofre quer os outros quatro.', '5'),
   ];
 
   // cadeado na porta de saída
   const padlock = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.045), dark);
-  padlock.add(body);
+  const padBody = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.12, 0.045), dark);
+  padlock.add(padBody);
   const shackle = new THREE.Mesh(new THREE.TorusGeometry(0.036, 0.01, 6, 14, Math.PI), tip);
   shackle.position.y = 0.06; padlock.add(shackle);
   padlock.position.set(-1.45, 1.02, 3.52);
   padlock.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   group.add(padlock);
 
-  return { group, batteries, key: keyItem, papers, padlock };
+  return {
+    group,
+    batteries,
+    key: keyItem,
+    papers,
+    safe: {
+      group: safe,
+      door: doorPivot,
+      position: new THREE.Vector3(3.45 * SCALE, 1.11 * SCALE, 0.45 * SCALE),
+      open: false,
+    },
+    padlock,
+  };
 }

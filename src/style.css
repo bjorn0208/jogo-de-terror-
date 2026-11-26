@@ -59,6 +59,21 @@ body{font-family:"Courier New",Courier,monospace;cursor:default}
   text-shadow:0 2px 6px #000;opacity:0;transition:opacity 1s;white-space:nowrap
 }
 #hint.show{opacity:1}
+#hint.paper{white-space:normal;width:min(90vw,560px);text-align:center;line-height:1.8}
+#hint .num{
+  display:inline-block;padding:0 6px;margin:0 3px;color:#ead9a8;font-weight:700;
+  border-bottom:1px solid rgba(234,217,168,.65);text-shadow:0 0 10px rgba(234,217,168,.3)
+}
+#action{
+  position:absolute;left:50%;top:calc(50% + 34px);transform:translateX(-50%);
+  font-size:11px;letter-spacing:.2em;color:rgba(210,216,190,.85);
+  text-shadow:0 2px 6px #000;opacity:0;transition:opacity .2s;white-space:nowrap
+}
+#action.show{opacity:1}
+#action b{
+  color:#e2e8c4;border:1px solid rgba(190,205,155,.5);
+  padding:2px 7px;margin-right:9px;font-weight:700
+}
 
 #overlay{
   position:fixed;inset:0;z-index:10;display:none;align-items:center;justify-content:center;
@@ -129,6 +144,25 @@ button:disabled{opacity:.45;cursor:wait}
 #pause .kicker{margin-bottom:14px}
 #pause h2{font-family:Georgia,serif;font-weight:400;font-size:30px;letter-spacing:.08em;color:#c9cdb6}
 #pause p{margin:12px 0 28px;font-size:11px;letter-spacing:.12em;color:#717969}
+
+#safe{
+  position:fixed;inset:0;z-index:13;display:none;align-items:center;justify-content:center;
+  background:rgba(2,4,3,.94);text-align:center;padding:18px
+}
+#safe.visible{display:flex}
+#safe .kicker{margin-bottom:14px}
+#safe h2{font-family:Georgia,serif;font-weight:400;font-size:28px;letter-spacing:.08em;color:#c9cdb6}
+#safe p{margin:12px 0 18px;font-size:10px;letter-spacing:.1em;color:#717969;line-height:1.7}
+#safe-code{
+  font-size:30px;letter-spacing:.34em;color:#dfe6bf;width:min(280px,90%);margin:0 auto 20px;
+  padding:11px 10px;border:1px solid rgba(150,165,125,.35);background:rgba(10,14,11,.75);
+  white-space:nowrap
+}
+#safe-keys{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(280px,90%);margin:0 auto 16px
+}
+#safe-keys button{padding:11px 0;font-size:14px;letter-spacing:.05em}
+#safe > div > button{padding:10px 20px}
 
 #death,#win{
   position:fixed;inset:0;z-index:12;display:none;align-items:center;justify-content:center;

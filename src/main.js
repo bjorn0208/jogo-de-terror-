@@ -6,7 +6,7 @@ import { Controls } from './controls.js';
 import { HorrorAudio } from './audio.js';
 import { createComposer } from './postfx.js';
 import { createMonster } from './monster.js';
-import { createItems, BATTERY_SECONDS, MAX_SPARES } from './items.js';
+import { createItems, BATTERY_SECONDS, MAX_SPARES, SAFE_CODE } from './items.js';
 import { createRats } from './rats.js';
 
 const $ = (id) => document.getElementById(id);
@@ -87,6 +87,7 @@ let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 let batterySeconds = BATTERY_SECONDS, spares = 0, hasKey = false;
 let lowWarned = false, doomed = false, doomTimer = 0;
 let scareTimer = 0, shake = 0, creakStep = 0, statusClock = 0;
+let safeUI = false, safeInput = '', activeTarget = null, actionLabel = '';
 const saidPhrases = new Set();
 const doorPos = new THREE.Vector3(-1.85 * SCALE, 0, 3.4 * SCALE);
 const creakMarks = [1.6, 0.2, -1.2].map((z) => z * SCALE);
@@ -217,6 +218,7 @@ function updateFlashlight(t, bob) {
 /* ---- Interface ------------------------------------------------------ */
 function showHint(text, seconds = 5) {
   hintEl.textContent = text;
+  hintEl.classList.remove('paper');
   hintEl.classList.add('show');
   hintTimer = seconds;
 }
@@ -226,6 +228,14 @@ function showPhrase(id, text, seconds = 4) {
   if (saidPhrases.has(id)) return;
   saidPhrases.add(id);
   showHint(text, seconds);
+}
+
+/** Folha lida pelo jogador: o número vai destacado no meio do texto. */
+function showPaper(note) {
+  const html = note.text.replace('{{n}}', '<b class="num">' + note.number + '</b>');
+  hintEl.innerHTML = html;
+  hintEl.classList.add('show', 'paper');
+  hintTimer = 9;
 }
 
 function updateStatus() {
@@ -286,13 +296,50 @@ function updateBattery(dt) {
   }
 }
 
-function checkPickups() {
-  if (!items) return;
+/* ---- Interação (botão PEGAR / tecla E) ------------------------------ */
+function findInteractable() {
+  if (!items || !started || finished || safeUI) return null;
   const p = camera.position;
-  const near = (v, r) => (p.x - v.x) ** 2 + (p.z - v.z) ** 2 < r * r;
+  let best = null, bestD = Infinity;
+  const consider = (type, obj, label, range) => {
+    const d = Math.hypot(p.x - obj.position.x, p.z - obj.position.z);
+    if (d <= range && d < bestD) { bestD = d; best = { type, obj, label }; }
+  };
 
   for (const b of items.batteries) {
-    if (b.taken || !near(b.position, 1.1)) continue;
+    if (!b.taken) consider('battery', b, 'PEGAR PILHA', 1.2);
+  }
+  if (!items.key.taken && items.key.mesh.visible) consider('key', items.key, 'PEGAR CHAVE', 1.2);
+  for (const note of items.papers) consider('paper', note, 'LER FOLHA', 1.5);
+  if (!items.safe.open) consider('safe', items.safe, 'ABRIR COFRE', 1.6);
+
+  const dd = Math.hypot(p.x - doorPos.x, p.z - doorPos.z);
+  if (dd <= 3.5 && dd < bestD) {
+    best = { type: 'door', obj: null, label: hasKey ? 'USAR CHAVE' : 'PORTA TRACADA' };
+  }
+  return best;
+}
+
+function updateActionUI() {
+  const target = findInteractable();
+  activeTarget = target;
+  const label = target ? target.label : '';
+  if (label === actionLabel) return;
+  actionLabel = label;
+  const el = $('action');
+  el.innerHTML = label ? '<b>E</b>' + label : '';
+  el.classList.toggle('show', !!label);
+  const btn = $('btn-pick');
+  if (btn) btn.textContent = label ? label.split(' ')[0] : 'PEGAR';
+}
+
+function interact() {
+  if (!started || finished || safeUI) return;
+  const t = activeTarget || findInteractable();
+  if (!t) return;
+
+  if (t.type === 'battery') {
+    const b = t.obj;
     b.taken = true;
     b.mesh.visible = false;
     spares = Math.min(MAX_SPARES, spares + 1);
@@ -304,22 +351,84 @@ function checkPickups() {
       lowWarned = false;
       showPhrase('saved', 'A luz voltou. Ele recuou.', 4);
     }
-  }
-
-  if (!items.key.taken && near(items.key.position, 1.1)) {
-    items.key.taken = true;
-    items.key.mesh.visible = false;
+  } else if (t.type === 'key') {
+    t.obj.taken = true;
+    t.obj.mesh.visible = false;
     hasKey = true;
     audio.pickup();
     showPhrase('findKey', 'A chave do cadeado. Enfim.', 4);
+  } else if (t.type === 'paper') {
+    t.obj.read = true;
+    audio.paper();
+    showPaper(t.obj);
+  } else if (t.type === 'safe') {
+    openSafeUI();
+  } else if (t.type === 'door') {
+    tryUseKey();
   }
 
-  items.papers.forEach((note, i) => {
-    if (note.read || !near(note.position, 1.5)) return;
-    note.read = true;
-    audio.paper();
-    showPhrase('note' + i, note.text, 7);
-  });
+  activeTarget = null;
+  updateStatus();
+}
+
+/* ---- Cofre ---------------------------------------------------------- */
+function openSafeUI() {
+  safeUI = true;
+  safeInput = '';
+  $('safe-code').textContent = '· · · ·';
+  $('safe-msg').textContent = 'As folhas dizem a ordem. O número destacado é cada posição.';
+  $('safe').classList.add('visible');
+  paused = true;
+  controls.enabled = false;
+  if (!isTouch && document.pointerLockElement) document.exitPointerLock();
+}
+
+function closeSafeUI() {
+  if (!safeUI) return;
+  safeUI = false;
+  $('safe').classList.remove('visible');
+  paused = false;
+  controls.enabled = true;
+  if (!isTouch) controls.requestLock();
+  clock.getDelta();
+}
+
+function refreshSafeUI() {
+  $('safe-code').textContent = (safeInput + '····').slice(0, 4).split('').join(' ');
+}
+
+function safeDigit(d) {
+  if (!safeUI || safeInput.length >= 4) return;
+  safeInput += d;
+  audio.click(true);
+  refreshSafeUI();
+}
+
+function safeBack() {
+  if (!safeUI) return;
+  safeInput = safeInput.slice(0, -1);
+  refreshSafeUI();
+}
+
+function safeSubmit() {
+  if (!safeUI) return;
+  if (safeInput.length < 4) {
+    $('safe-msg').textContent = 'Faltam números.';
+    return;
+  }
+  if (safeInput === SAFE_CODE) {
+    items.safe.open = true;
+    items.safe.door.rotation.y = -1.35;
+    items.key.mesh.visible = true;
+    audio.unlock();
+    closeSafeUI();
+    showPhrase('safeOpen', 'O cofre cedeu. A chave está aqui dentro.', 5);
+  } else {
+    safeInput = '';
+    audio.click(false);
+    $('safe-msg').textContent = 'Errado. Leia as folhas na ordem certa.';
+    refreshSafeUI();
+  }
 }
 
 function checkStairCreaks() {
@@ -333,7 +442,7 @@ function checkStairCreaks() {
 }
 
 function tryUseKey() {
-  if (!started || finished || !items) return;
+  if (!started || finished || safeUI || !items) return;
   const p = camera.position;
   const dist = Math.hypot(p.x - doorPos.x, p.z - doorPos.z);
   if (!hasKey) {
@@ -459,13 +568,18 @@ function restartGame() {
   lowWarned = false; doomed = false; doomTimer = 0;
   scareTimer = 0; shake = 0; creakStep = 0; statusClock = 0;
   flickerUntil = -1;
+  safeUI = false; safeInput = ''; activeTarget = null; actionLabel = '';
+  $('safe').classList.remove('visible');
+  $('action').classList.remove('show');
   saidPhrases.clear();
   finished = false;
 
   if (items) {
     for (const b of items.batteries) { b.taken = false; b.mesh.visible = true; }
-    items.key.taken = false; items.key.mesh.visible = true;
+    items.key.taken = false; items.key.mesh.visible = false;
     for (const note of items.papers) note.read = false;
+    items.safe.open = false;
+    items.safe.door.rotation.y = 0;
     items.padlock.visible = true;
   }
   monster?.reset?.();
@@ -496,9 +610,9 @@ document.addEventListener('pointerlockchange', () => {
   if (!started || isTouch) return;
   const locked = document.pointerLockElement === canvas;
   paused = !locked;
-  controls.enabled = locked;
-  pauseEl.classList.toggle('visible', !locked);
-  hud.classList.toggle('visible', locked);
+  controls.enabled = locked && !safeUI;
+  pauseEl.classList.toggle('visible', !locked && !safeUI);
+  hud.classList.toggle('visible', locked && !safeUI);
   if (locked) audio.resume();
 });
 
@@ -506,7 +620,7 @@ document.addEventListener('pointerlockchange', () => {
 if (isTouch) {
   controls.bindTouch($('stick'), $('stick-knob'), $('lookzone'));
   $('btn-flash').addEventListener('click', toggleFlash);
-  $('btn-key').addEventListener('click', tryUseKey);
+  $('btn-pick').addEventListener('click', interact);
   $('btn-dim').addEventListener('click', (e) => { e.preventDefault(); adjustBrightness(-0.1); });
   $('btn-lumen').addEventListener('click', (e) => { e.preventDefault(); adjustBrightness(0.1); });
   const run = $('btn-run'), crouch = $('btn-crouch');
@@ -522,6 +636,21 @@ if (isTouch) {
 }
 
 controls.onFootstep = (amount, sprint) => audio.footstep(amount, sprint);
+
+/* ---- Teclado do cofre ------------------------------------------------ */
+for (const btn of document.querySelectorAll?.('#safe-keys [data-d]') || []) {
+  btn.addEventListener('click', () => safeDigit(btn.dataset.d));
+}
+$('safe-back').addEventListener('click', safeBack);
+$('safe-ok').addEventListener('click', safeSubmit);
+$('safe-close').addEventListener('click', closeSafeUI);
+document.addEventListener('keydown', (e) => {
+  if (!safeUI) return;
+  if (/^[0-9]$/.test(e.key)) { e.preventDefault(); safeDigit(e.key); }
+  else if (e.key === 'Backspace') { e.preventDefault(); safeBack(); }
+  else if (e.key === 'Enter') { e.preventDefault(); safeSubmit(); }
+  else if (e.key === 'Escape') { e.preventDefault(); closeSafeUI(); }
+});
 
 /* ---- Redimensionar --------------------------------------------------- */
 window.addEventListener('resize', () => {
@@ -544,7 +673,7 @@ function animate() {
     bob = controls.update(dt);
     audio.update(dt);
     updateBattery(dt);
-    checkPickups();
+    updateActionUI();
     checkStairCreaks();
     camera.getWorldDirection(viewDir);
     const lightOn = flashOn && batterySeconds > 0;
@@ -563,6 +692,9 @@ function animate() {
     camera.position.y = 1.62 + Math.sin(elapsed * 0.6) * 0.012;
   }
 
+  if ((!started || paused || safeUI) && actionLabel) {
+    actionLabel = ''; activeTarget = null; $('action').classList.remove('show');
+  }
   if (hintTimer > 0) {
     hintTimer -= dt;
     if (hintTimer <= 0) hintEl.classList.remove('show');
@@ -577,7 +709,7 @@ function animate() {
   if (controls.consume('sound')) toggleSound();
   if (controls.consume('brightDown')) adjustBrightness(-0.1);
   if (controls.consume('brightUp')) adjustBrightness(0.1);
-  if (controls.consume('interact')) tryUseKey();
+  if (controls.consume('interact')) interact();
 
   if (room) {
     room.update(elapsed);
