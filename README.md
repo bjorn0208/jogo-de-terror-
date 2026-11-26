@@ -43,6 +43,20 @@ eco de porão, goteiras e rangidos).
   coloração verde-amarelada doente.
 - Colisão com paredes e objetos, passo com head-bob, agachamento e corrida.
 - Áudio procedural com reverberação sintética de porão.
+- Um monstro que **avança quando você não está olhando** e congela quando a
+  lanterna o pega. Opcionalmente carrega `assets/monster.glb` (coloque o modelo
+  do Hyper3D lá com esse nome); sem arquivo, usa uma silhueta provisória.
+
+## No celular
+
+Detecção automática de toque: joystick à esquerda, arraste à direita para
+olhar, botões de luz/correr/agachar. Também reduz resolução das texturas
+(256 px), poeira (220 partículas), sombra (512 px) e desliga antialias para o
+jogo carregar e rodar mais rápido. O pós-processamento tem fallback para
+render direto caso o aparelho não suporte.
+
+Se o jogo ficar preso em "CARREGANDO AMBIENTE...", aparecerá um aviso vermelho
+com o erro na parte de baixo da tela.
 
 ## Desenvolvimento
 
@@ -60,6 +74,8 @@ bun run check   # checagem de sintaxe
 - `src/controls.js` — first-person, colisão, mouse e toque.
 - `src/audio.js` — sons sintetizados.
 - `src/postfx.js` — correção de cor e filme.
+- `src/monster.js` — monstro e carregamento opcional do `.glb`.
+- `assets/` — onde colocar `monster.glb`.
 - `src/index.template.html` / `src/style.css` — interface.
 
 ## Próximos passos sugeridos

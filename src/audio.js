@@ -172,6 +172,18 @@ export class HorrorAudio {
     o.start(t); o.stop(t + 0.18);
   }
 
+  growl() {
+    if (!this.ready || this.muted) return;
+    const ctx = this.ctx, t = ctx.currentTime;
+    const o = ctx.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(62, t);
+    o.frequency.linearRampToValueAtTime(43, t + 1.3);
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 240;
+    const g = ctx.createGain(); this._env(g, t, 0.075, 0.25, 1.4);
+    o.connect(lp); lp.connect(g); this._route(g, 0.8);
+    o.start(t); o.stop(t + 1.75);
+  }
+
   whisper() {
     if (!this.ready || this.muted) return;
     const ctx = this.ctx, t = ctx.currentTime;

@@ -4,9 +4,9 @@ import { rng } from './textures.js';
 /* Poeira suspensa que so aparece dentro do feixe da lanterna,
    e um cone de luz bem fraco para dar volume ao ar parado. */
 
-export function createAtmosphere(scene, camera, tex, roomSize) {
+export function createAtmosphere(scene, camera, tex, roomSize, lowEnd = false) {
   const { w, d, h } = roomSize;
-  const count = 520;
+  const count = lowEnd ? 220 : 520;
   const pos = new Float32Array(count * 3);
   const scale = new Float32Array(count);
   const r = rng(7781);
@@ -72,7 +72,7 @@ export function createAtmosphere(scene, camera, tex, roomSize) {
 
   // cone de feixe — anexado a camera, segue a lanterna automaticamente
   const len = 11, radius = Math.tan(0.42) * len;
-  const coneGeo = new THREE.ConeGeometry(radius, len, 28, 1, true);
+  const coneGeo = new THREE.ConeGeometry(radius, len, lowEnd ? 14 : 28, 1, true);
   coneGeo.translate(0, -len / 2, 0);
   coneGeo.rotateX(Math.PI / 2);
   const beamMat = new THREE.MeshBasicMaterial({

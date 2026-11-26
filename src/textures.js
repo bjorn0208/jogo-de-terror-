@@ -409,12 +409,15 @@ export function beamTexture(size = 128) {
   return toTexture(c, { srgb: true });
 }
 
-export function buildTextures() {
+/** small=true no celular: metade da resolução, cache de textura bem mais leve. */
+export function buildTextures(small = false) {
+  const s = small ? 256 : 512;
+  const m = small ? 128 : 256;
   return {
-    wall: concreteWall(),
-    floor: concreteFloor(),
-    wood: oldWood(),
-    metal: rustyMetal(),
+    wall: concreteWall(s),
+    floor: concreteFloor(s),
+    wood: oldWood(s),
+    metal: rustyMetal(m),
     cobweb: cobweb(),
     stain: stainTexture(),
     glow: glowTexture(),

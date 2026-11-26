@@ -13,6 +13,8 @@
 <div id="grain"></div>
 <div id="vignette"></div>
 
+<div id="erro" hidden></div>
+
 <div id="hud">
   <div id="crosshair"></div>
   <div id="status">
@@ -61,6 +63,23 @@
   </div>
 </div>
 
+<script>
+(function(){
+  function show(msg){
+    var e=document.getElementById('erro');
+    if(!e) return;
+    e.hidden=false;
+    e.textContent='ERRO: '+msg+'\nSe aparecer isso, me mande o texto.';
+  }
+  window.__showError=show;
+  window.addEventListener('error',function(ev){
+    show((ev.message||'erro desconhecido')+' @ '+(ev.filename||'').split('/').pop()+':'+(ev.lineno||''));
+  });
+  window.addEventListener('unhandledrejection',function(ev){
+    show('Promise: '+((ev.reason&&ev.reason.message)||ev.reason));
+  });
+})();
+</script>
 <script>/*__BUNDLE__*/</script>
 </body>
 </html>

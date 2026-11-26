@@ -5,6 +5,7 @@ import { createAtmosphere } from './atmosphere.js';
 import { Controls } from './controls.js';
 import { HorrorAudio } from './audio.js';
 import { createComposer } from './postfx.js';
+import { createMonster } from './monster.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('game');
@@ -16,10 +17,11 @@ const startLabel = $('start-label');
 const hintEl = $('hint');
 const touchEl = $('touch');
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+const lowEnd = isTouch || (navigator.hardwareConcurrency || 8) <= 4;
 
 /* ---- Renderer ------------------------------------------------------- */
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowEnd, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : 1.6));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -41,10 +43,22 @@ scene.add(new THREE.HemisphereLight(0x1c261e, 0x090b08, 0.16));
 
 const controls = new Controls(camera, canvas, []);
 const audio = new HorrorAudio();
-const post = createComposer(renderer, scene, camera);
 const clock = new THREE.Clock();
 
-let room, atmosphere, flash, flashTarget, pointLight, torch, lens, glow;
+// Se o pós-processamento falhar no celular, o jogo continua com render direto.
+let post = null;
+try {
+  post = createComposer(renderer, scene, camera);
+} catch (err) {
+  console.warn('Post-processamento indisponível; usando render direto.', err);
+}
+function renderFrame(time) {
+  if (post) post.render(time);
+  else renderer.render(scene, camera);
+}
+
+let room, atmosphere, monster, flash, flashTarget, pointLight, torch, lens, glow;
+const viewDir = new THREE.Vector3();
 let started = false, paused = false, flashOn = true, elapsed = 0;
 let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 
@@ -88,7 +102,7 @@ function setupFlashlight(tex) {
   flash = new THREE.SpotLight(0xffe7b4, 30, 22, 0.47, 0.55, 1.45);
   flash.position.set(0.12, -0.12, -0.06);
   flash.castShadow = true;
-  flash.shadow.mapSize.set(1024, 1024);
+  flash.shadow.mapSize.set(lowEnd ? 512 : 1024, lowEnd ? 512 : 1024);
   flash.shadow.camera.near = 0.06;
   flash.shadow.camera.far = 22;
   flash.shadow.bias = -0.00035;
@@ -170,22 +184,39 @@ function maybeHint() {
 }
 
 /* ---- Construção do mundo -------------------------------------------- */
-function build() {
-  const tex = buildTextures();
-  room = createRoom(scene, tex);
-  controls.colliders = room.colliders;
-  atmosphere = createAtmosphere(scene, camera, tex, ROOM);
-  setupFlashlight(tex);
-  controls.reset(room.spawn);
-  post.setSize(window.innerWidth, window.innerHeight);
-  startBtn.disabled = false;
-  startLabel.textContent = 'ENTRAR NO PORÃO';
-  if (isTouch) startLabel.textContent = 'ENTRAR';
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => resolve()));
+
+async function build() {
+  try {
+    startLabel.textContent = 'GERANDO TEXTURAS...';
+    await nextFrame();
+    const tex = buildTextures(lowEnd);
+
+    startLabel.textContent = 'MONTANDO O PORÃO...';
+    await nextFrame();
+    room = createRoom(scene, tex);
+    controls.colliders = room.colliders;
+
+    atmosphere = createAtmosphere(scene, camera, tex, ROOM, lowEnd);
+    setupFlashlight(tex);
+    monster = createMonster(scene, audio, room.colliders);
+    monster.onAttack = () => showHint('ALGO PASSOU MUITO PERTO.', 3);
+    controls.reset(room.spawn);
+    post?.setSize(window.innerWidth, window.innerHeight);
+
+    startBtn.disabled = false;
+    startLabel.textContent = isTouch ? 'ENTRAR' : 'ENTRAR NO PORÃO';
+  } catch (err) {
+    console.error(err);
+    window.__showError?.('Falha ao montar: ' + (err && err.message ? err.message : err));
+    startBtn.disabled = false;
+    startLabel.textContent = 'TENTAR ENTRAR';
+  }
 }
 
 /* ---- Início / pausa -------------------------------------------------- */
 function startGame() {
-  if (!room) return;
+  if (!room) { build(); return; }
   audio.init();
   audio.resume();
   started = true;
@@ -240,7 +271,7 @@ window.addEventListener('resize', () => {
   camera.aspect = w / h; camera.updateProjectionMatrix();
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
   renderer.setSize(w, h);
-  post.setSize(w, h);
+  post?.setSize(w, h);
 });
 
 /* ---- Loop ------------------------------------------------------------ */
@@ -254,6 +285,8 @@ function animate() {
   if (started && !paused) {
     bob = controls.update(dt);
     audio.update(dt);
+    camera.getWorldDirection(viewDir);
+    monster?.update(dt, camera.position, viewDir, flashOn);
     maybeHint();
     if (hintTimer > 0) {
       hintTimer -= dt;
@@ -272,7 +305,7 @@ function animate() {
     updateFlashlight(elapsed, bob);
     atmosphere.update(elapsed, flashOn);
   }
-  post.render(elapsed);
+  renderFrame(elapsed);
 }
 
 animate();
