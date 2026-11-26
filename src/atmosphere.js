@@ -50,7 +50,7 @@ export function createAtmosphere(scene, camera, tex, roomSize, lowEnd = false) {
         float dist = length(toP);
         float ang = dot(normalize(toP), normalize(uLightDir));
         float inBeam = smoothstep(0.80, 0.98, ang) * (1.0 - smoothstep(2.0, 13.0, dist));
-        vAlpha = inBeam * uOn * (0.05 + aScale * 0.19) * smoothstep(0.15, 0.8, dist);
+        vAlpha = inBeam * uOn * (0.04 + aScale * 0.13) * smoothstep(0.15, 0.8, dist);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_PointSize = (1.5 + aScale * 5.0) * (90.0 / max(0.1, -mv.z));
         gl_Position = projectionMatrix * mv;
@@ -79,7 +79,7 @@ export function createAtmosphere(scene, camera, tex, roomSize, lowEnd = false) {
     map: tex.beam,
     color: 0xd8e0b8,
     transparent: true,
-    opacity: 0.055,
+    opacity: 0.028,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     side: THREE.DoubleSide,
@@ -98,7 +98,7 @@ export function createAtmosphere(scene, camera, tex, roomSize, lowEnd = false) {
       uniforms.uTime.value = time;
       uniforms.uOn.value = flashlightOn ? 1 : 0;
       beam.visible = flashlightOn;
-      beamMat.opacity = 0.05 + Math.sin(time * 7.3) * 0.003 + Math.sin(time * 2.1) * 0.004;
+      beamMat.opacity = 0.028 + Math.sin(time * 7.3) * 0.0015 + Math.sin(time * 2.1) * 0.002;
       beam.getWorldPosition(lightPos);
       camera.getWorldDirection(lightDir);
       uniforms.uLightPos.value.copy(lightPos);

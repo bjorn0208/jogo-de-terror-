@@ -26,7 +26,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
+renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
@@ -37,9 +37,11 @@ const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerH
 camera.rotation.order = 'YXZ';
 scene.add(camera);
 
-// Quase escuro: o suficiente para não existir um "preto total" sem textura.
-scene.add(new THREE.AmbientLight(0x2c3a30, 0.2));
-scene.add(new THREE.HemisphereLight(0x1c261e, 0x090b08, 0.16));
+// Praticamente nada de luz ambiente: a lanterna manda na cena.
+scene.add(new THREE.AmbientLight(0x273329, 0.055));
+scene.add(new THREE.HemisphereLight(0x182019, 0x070906, 0.04));
+
+const FLASH_INTENSITY = 11;
 
 const controls = new Controls(camera, canvas, []);
 const audio = new HorrorAudio();
@@ -65,10 +67,9 @@ let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 /* ---- Lanterna ------------------------------------------------------- */
 function createTorch(tex) {
   const g = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({
-    color: 0x242822, metalness: 0.8, roughness: 0.48, emissive: 0x070806,
-  });
-  const ringMat = new THREE.MeshStandardMaterial({ ...tex.metal, color: 0x6a6a60, metalness: 0.8, roughness: 0.6 });
+  // MeshBasic: o modelo não é "queimado" pelo próprio facho da lanterna.
+  const bodyMat = new THREE.MeshBasicMaterial({ color: 0x191c18 });
+  const ringMat = new THREE.MeshBasicMaterial({ color: 0x41463d });
 
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.031, 0.034, 0.25, 16), bodyMat);
   barrel.rotation.x = Math.PI / 2; barrel.position.z = 0.02; g.add(barrel);
@@ -82,25 +83,26 @@ function createTorch(tex) {
   }
   lens = new THREE.Mesh(
     new THREE.CircleGeometry(0.048, 24),
-    new THREE.MeshBasicMaterial({ color: 0xfff0c4, fog: false })
+    new THREE.MeshBasicMaterial({ color: 0xffe2a6, fog: false })
   );
   lens.position.z = -0.192; g.add(lens);
 
   glow = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: tex.glow, color: 0xffe8b0, transparent: true, opacity: 0.75,
+    map: tex.glow, color: 0xffe0a8, transparent: true, opacity: 0.38,
     blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
   }));
   glow.position.z = -0.23; glow.scale.setScalar(0.34); g.add(glow);
 
   g.traverse((o) => { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } });
-  g.position.set(0.3, -0.27, -0.56);
+  // bem fora do cone: a cabeça da lanterna não aparece iluminada
+  g.position.set(0.37, -0.33, -0.52);
   g.rotation.set(0.05, -0.06, 0.05);
   return g;
 }
 
 function setupFlashlight(tex) {
-  flash = new THREE.SpotLight(0xffe7b4, 30, 22, 0.47, 0.55, 1.45);
-  flash.position.set(0.12, -0.12, -0.06);
+  flash = new THREE.SpotLight(0xffe4b2, FLASH_INTENSITY, 16, 0.4, 0.68, 1.8);
+  flash.position.set(0.1, -0.1, -0.06);
   flash.castShadow = true;
   flash.shadow.mapSize.set(lowEnd ? 512 : 1024, lowEnd ? 512 : 1024);
   flash.shadow.camera.near = 0.06;
@@ -133,20 +135,21 @@ function updateFlashlight(t, bob) {
 
   // contato frouxo: apagões curtos e involuntários
   if (t > flickerUntil + 1.2 && Math.random() < 0.0011) flickerUntil = t + 0.06 + Math.random() * 0.14;
-  const jitter = 1 + Math.sin(t * 17.3) * 0.014 + Math.sin(t * 31.7) * 0.009;
-  let intensity = 30 * jitter;
+  const jitter = 1 + Math.sin(t * 17.3) * 0.007 + Math.sin(t * 31.7) * 0.004;
+  let intensity = FLASH_INTENSITY * jitter;
   if (t < flickerUntil) intensity *= 0.25 + Math.random() * 0.5;
   flash.intensity = intensity;
-  pointLight.intensity = 0.65 * (intensity / 30);
-  glow.material.opacity = 0.7 * (intensity / 30);
+  pointLight.intensity = 0.12 * (intensity / FLASH_INTENSITY);
+  glow.material.opacity = 0.38 * (intensity / FLASH_INTENSITY);
 
+  // Alvo quase fixo: o sway mexe a lanterna na mão, não a direção do feixe.
   const sx = controls.sway.x, sy = controls.sway.y;
-  flashTarget.position.set(sx * 3.0, sy * 3.0 - 0.02, -8);
-  torch.position.set(0.3 + sx, -0.27 + sy + bob.bobY * 0.35, -0.56);
-  torch.rotation.set(0.05 + sy * 0.6, -0.06 + sx * 0.6, 0.05);
+  flashTarget.position.set(sx * 0.4, sy * 0.4 - 0.02, -8);
+  torch.position.set(0.37 + sx * 0.5, -0.33 + sy * 0.5 + bob.bobY * 0.2, -0.52);
+  torch.rotation.set(0.05 + sy * 0.3, -0.06 + sx * 0.3, 0.05);
 
-  // passos fazem o feixe tremer um pouco
-  flash.position.set(0.12 + bob.bobX * 0.5, -0.12 + bob.bobY * 0.25, -0.06);
+  // passos fazem o feixe tremer só um pouco
+  flash.position.set(0.1 + bob.bobX * 0.15, -0.1 + bob.bobY * 0.1, -0.06);
 }
 
 /* ---- Interface ------------------------------------------------------ */
