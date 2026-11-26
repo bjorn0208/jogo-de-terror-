@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#050807">
+<title>PORÃO — um jogo de terror</title>
+<style>/*__STYLE__*/</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="grain"></div>
+<div id="vignette"></div>
+
+<div id="hud">
+  <div id="crosshair"></div>
+  <div id="status">
+    <span class="label">LANTERNA</span><span id="flash-state">LIGADA</span>
+    <span class="sep">|</span><span class="label">SOM</span><span id="sound-state">LIGADO</span>
+  </div>
+  <div id="hint"></div>
+</div>
+
+<div id="overlay" class="visible">
+  <div class="overlay-inner">
+    <div class="kicker">UMA CASA QUE NÃO DEVERIA ESTAR EM PÉ</div>
+    <h1>PORÃO</h1>
+    <div class="subtitle">Você acordou aqui. Não há luz elétrica.</div>
+    <div class="rule"></div>
+    <div class="controls">
+      <div><b>W A S D</b><span>mover</span></div>
+      <div><b>MOUSE</b><span>olhar</span></div>
+      <div><b>SHIFT</b><span>correr</span></div>
+      <div><b>C</b><span>agachar</span></div>
+      <div><b>F</b><span>lanterna</span></div>
+      <div><b>M</b><span>som</span></div>
+      <div><b>ESC</b><span>pausar</span></div>
+    </div>
+    <button id="start-btn" disabled><span id="start-label">CARREGANDO AMBIENTE...</span></button>
+    <div class="footer">Fone de ouvido recomendado. A luz da lanterna é a única coisa que ainda obedece você.</div>
+  </div>
+</div>
+
+<div id="touch" hidden>
+  <div id="stick"><div id="stick-knob"></div></div>
+  <div id="lookzone"></div>
+  <div id="touch-buttons">
+    <button id="btn-flash">LUZ</button>
+    <button id="btn-run">CORRER</button>
+    <button id="btn-crouch">AGACHAR</button>
+  </div>
+</div>
+
+<div id="pause" class="overlay-small">
+  <div>
+    <div class="kicker">PAUSA</div>
+    <h2>Você está parado.</h2>
+    <p>A casa continua respirando.</p>
+    <button id="resume-btn">VOLTAR</button>
+  </div>
+</div>
+
+<script>/*__BUNDLE__*/</script>
+</body>
+</html>
