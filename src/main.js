@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { buildTextures } from './textures.js';
-import { createRoom, ROOM } from './room.js';
+import { createRoom, ROOM, SCALE } from './room.js';
 import { createAtmosphere } from './atmosphere.js';
 import { Controls } from './controls.js';
 import { HorrorAudio } from './audio.js';
@@ -215,17 +215,17 @@ function adjustBrightness(delta) {
 function maybeHint() {
   const p = camera.position;
   if (elapsed - lastHint < 14) return;
-  if (controls.floorY > 2.5) {
+  if (controls.floorY > 2.5 * SCALE) {
     showHint('O corredor cheira a mofo. O quarto está mais adiante.', 4);
     lastHint = elapsed;
     return;
   }
-  if (Math.abs(p.x + 3.25) < 0.7 && p.z > 2.3 && p.z < 3.3) {
+  if (Math.abs(p.x + 3.25 * SCALE) < 0.7 * SCALE && p.z > 2.3 * SCALE && p.z < 3.3 * SCALE) {
     showHint('Uma escada. As tábuas parecem firmes.', 4);
     lastHint = elapsed;
     return;
   }
-  if (Math.abs(p.x + 1.85) < 1.2 && p.z > 2.75) {
+  if (Math.abs(p.x + 1.85 * SCALE) < 1.2 * SCALE && p.z > 2.75 * SCALE) {
     showHint('A porta não abre. Ainda.', 4);
     lastHint = elapsed;
   }

@@ -30,13 +30,15 @@ eco de porão, goteiras e rangidos).
 
 ## O que já existe
 
-- Porão de ~8 × 7 m com paredes e piso de concreto, janela gradeada e a
-  **única porta da casa** (a de saída, trancada). Também tem canos, caldeira,
+- Casa com o **dobro do tamanho em todas as direções** (16,8 × 14,4 × 6 m por
+  andar). O porão tem paredes e piso de concreto, janela gradeada e a **única
+  porta da casa** (a de saída, trancada). Também tem canos, caldeira,
   prateleiras, bancada, cadeira tombada, entulho, poças, manchas e teias.
-- Escada de 15 degraus com corrimão apenas na lateral (o caminho fica livre)
+- Escada de 30 degraus com corrimão apenas na lateral (o caminho fica livre)
   até um **andar superior** com corredor e quarto — o quarto é aberto, sem
   porta nem batente. O jogador sobe e desce com altura de piso interpolada;
-  as colisões são separadas por andar.
+  as colisões são separadas por andar. O jogador mantém o tamanho humano, então
+  tudo à volta dele ficou duas vezes maior.
 - **Texturas 100% procedurais**: cor, normal e rugosidade geradas em canvas
   (umidade, rachaduras, ferrugem, veios de madeira, cascalho). Nenhum asset
   externo é baixado.

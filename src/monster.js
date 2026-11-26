@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { ROOM } from './room.js';
+import { ROOM, SCALE } from './room.js';
 
 /* ------------------------------------------------------------------ *
  *  Monstro do porão.
@@ -14,7 +14,8 @@ import { ROOM } from './room.js';
 
 export function createMonster(scene, audio, colliders = []) {
   const group = new THREE.Group();
-  group.position.set(2.85, 0, -2.05);
+  const start = { x: 2.85 * SCALE, z: -2.05 * SCALE };
+  group.position.set(start.x, 0, start.z);
   scene.add(group);
 
   const skin = new THREE.MeshStandardMaterial({ color: 0x111410, roughness: 1, metalness: 0 });
@@ -83,7 +84,7 @@ export function createMonster(scene, audio, colliders = []) {
   }
 
   function reset() {
-    group.position.set(2.85, 0, -2.05);
+    group.position.set(start.x, 0, start.z);
     state = 'idle'; seenFor = hiddenFor = 0; attackCooldown = 6;
   }
 

@@ -7,9 +7,22 @@ import { rng } from './textures.js';
  *  retas — e o que faz um cenario parecer "real".
  * ------------------------------------------------------------------ */
 
-export const ROOM = { w: 8.4, d: 7.2, h: 3.0, wall: 0.22 };
+// A casa é montada em coordenadas BASE e depois escalada por SCALE.
+// O jogador mantém o tamanho humano: tudo à volta dele fica o dobro.
+export const SCALE = 2;
+const BASE = { w: 8.4, d: 7.2, h: 3.0, wall: 0.22 };
+export const ROOM = {
+  w: BASE.w * SCALE,
+  d: BASE.d * SCALE,
+  h: BASE.h * SCALE,
+  wall: BASE.wall * SCALE,
+};
 
 export function createRoom(scene, tex) {
+  const group = new THREE.Group();
+  group.scale.setScalar(SCALE);
+  scene.add(group);
+
   const colliders = [];
   const anim = [];
   const r = rng(9042);
@@ -31,7 +44,7 @@ export function createRoom(scene, tex) {
 
   function register(mesh, cast = true, receive = true) {
     mesh.castShadow = cast; mesh.receiveShadow = receive;
-    scene.add(mesh);
+    group.add(mesh);
     return mesh;
   }
 
@@ -57,7 +70,7 @@ export function createRoom(scene, tex) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), mat);
     m.rotation.x = up ? -Math.PI / 2 : Math.PI / 2;
     m.position.set((x0 + x1) / 2, y, (z0 + z1) / 2);
-    m.receiveShadow = true; scene.add(m);
+    m.receiveShadow = true; group.add(m);
     return m;
   }
 
@@ -72,7 +85,7 @@ export function createRoom(scene, tex) {
   }
 
   /* ---- Estrutura ---------------------------------------------------- */
-  const { w, d, h, wall } = ROOM;
+  const { w, d, h, wall } = BASE;
   const hw = w / 2, hd = d / 2;
 
   // vão da escada: o teto do porão é o piso do andar de cima
@@ -112,7 +125,7 @@ export function createRoom(scene, tex) {
     new THREE.PlaneGeometry(ww, wh),
     new THREE.MeshBasicMaterial({ color: 0x0c1211, fog: false })
   );
-  outside.position.set(wx, wy, -hd - 0.13); scene.add(outside);
+  outside.position.set(wx, wy, -hd - 0.13); group.add(outside);
   // grade
   for (let i = 0; i <= 3; i++) {
     cyl(blackMetal, 0.018, wh, wl + (ww / 3) * i, wy, -hd + 0.03, { segs: 8 });
@@ -141,7 +154,8 @@ export function createRoom(scene, tex) {
   box(darkWoodMat, 0.05, 0.14, d, hw - 0.14, 0.07, 0, { cast: false });
 
   /* ---- Escada -------------------------------------------------------- */
-  const steps = 15;
+  // 30 degraus mantêm cada passo com ~0,20 m depois da escala da casa.
+  const steps = 30;
   for (let i = 0; i < steps; i++) {
     const t0 = i / steps, t1 = (i + 1) / steps;
     const zFront = stairZ1 - t0 * (stairZ1 - stairZ0);
@@ -196,7 +210,7 @@ export function createRoom(scene, tex) {
     new THREE.PlaneGeometry(1.1, 0.7),
     new THREE.MeshBasicMaterial({ color: 0x070b09, fog: false })
   );
-  upWin.position.set(2.3, uy + 2.15, -hd + 0.13); scene.add(upWin);
+  upWin.position.set(2.3, uy + 2.15, -hd + 0.13); group.add(upWin);
   for (let i = 0; i < 3; i++) {
     box(darkWoodMat, 1.22, 0.11, 0.06, 2.3, uy + 1.87 + i * 0.28, -hd + 0.17, { cast: false });
   }
@@ -222,7 +236,7 @@ export function createRoom(scene, tex) {
     new THREE.SphereGeometry(0.05, 12, 10),
     new THREE.MeshStandardMaterial({ color: 0x3f443a, roughness: 0.4 })
   );
-  upBulb.position.set(-1.4, uy + 2.22, -1.0); scene.add(upBulb);
+  upBulb.position.set(-1.4, uy + 2.22, -1.0); group.add(upBulb);
 
   /* ---- Canos -------------------------------------------------------- */
   const pipeY = h - 0.23;
@@ -302,7 +316,7 @@ export function createRoom(scene, tex) {
   cyl(blackMetal, 0.19, 0.3, bx - 0.05, 0.18, bz - 1.35, { segs: 16 });
   const bucketWater = new THREE.Mesh(new THREE.CircleGeometry(0.17, 20), liquid);
   bucketWater.rotation.x = -Math.PI / 2; bucketWater.position.set(bx - 0.05, 0.3, bz - 1.35);
-  bucketWater.receiveShadow = true; scene.add(bucketWater);
+  bucketWater.receiveShadow = true; group.add(bucketWater);
   anim.push((t) => { bucketWater.material.opacity = 0.5 + Math.sin(t * 0.7) * 0.03; });
 
   /* ---- Caixas empilhadas -------------------------------------------- */
@@ -331,7 +345,7 @@ export function createRoom(scene, tex) {
   chair.position.set(1.45, 0, 1.55);
   chair.rotation.set(0, 0.7, 1.32);
   chair.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-  scene.add(chair);
+  group.add(chair);
   addCollider(1.45, 1.55, 0.7, 0.7);
 
   /* ---- Poças e manchas ---------------------------------------------- */
@@ -348,7 +362,7 @@ export function createRoom(scene, tex) {
       normalScale: new THREE.Vector2(0.35, 0.35), transparent: true, opacity: 0.82,
     }));
     puddle.rotation.x = -Math.PI / 2; puddle.position.set(px, 0.012, pz);
-    puddle.receiveShadow = true; scene.add(puddle);
+    puddle.receiveShadow = true; group.add(puddle);
   }
   for (let i = 0; i < 12; i++) {
     const side = i % 4;
@@ -358,12 +372,12 @@ export function createRoom(scene, tex) {
     if (side === 1) { m.position.set(hw - 0.12, 0.3 + r() * 2.2, (r() - 0.5) * d); m.rotation.y = -Math.PI / 2; }
     if (side === 2) { m.position.set((r() - 0.5) * w, 0.3 + r() * 2.2, -hd + 0.12); }
     if (side === 3) { m.position.set((r() - 0.5) * w, 0.3 + r() * 2.2, hd - 0.12); m.rotation.y = Math.PI; }
-    m.rotation.z = r() * Math.PI; scene.add(m);
+    m.rotation.z = r() * Math.PI; group.add(m);
   }
   // mancha escura no chao, bem discreta
   const floorStain = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.2), stainMat);
   floorStain.rotation.x = -Math.PI / 2; floorStain.position.set(-1.0, 0.014, -1.4);
-  scene.add(floorStain);
+  group.add(floorStain);
 
   /* ---- Teias de aranha ---------------------------------------------- */
   for (const [x, y, z, ry, s] of [
@@ -374,7 +388,7 @@ export function createRoom(scene, tex) {
   ]) {
     const web = new THREE.Mesh(new THREE.PlaneGeometry(s, s), webMat);
     web.position.set(x, y, z); web.rotation.set(-Math.PI / 2 + 0.1, ry, 0);
-    scene.add(web);
+    group.add(web);
   }
 
   /* ---- Lâmpada morta pendurada -------------------------------------- */
@@ -404,25 +418,34 @@ export function createRoom(scene, tex) {
       (r() - 0.5) * 7, 0.008, (r() - 0.5) * 6, { rotY: r() * Math.PI, cast: false });
   }
 
+  const zones = [
+    // corredor ( dividido para não “puxar” o jogador para o andar de cima
+    // quando ele estiver embaixo, na boca da escada )
+    { minX: -hw + 0.2, maxX: stairX0, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY },
+    { minX: stairX0, maxX: stairX1, minZ: -hd + 0.2, maxZ: stairZ0, y: upperY },
+    { minX: stairX1, maxX: -0.7, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY },
+    // quarto
+    { minX: -0.7, maxX: hw - 0.2, minZ: -hd + 0.2, maxZ: 1.2, y: upperY },
+    // porão
+    { minX: -hw, maxX: hw, minZ: -hd, maxZ: hd, y: 0 },
+  ];
+  const ramps = [{
+    minX: stairX0, maxX: stairX1,
+    zMin: stairZ0, zMax: stairZ1,
+    yBottom: 0, yTop: upperY, steps,
+  }];
+
+  // Tudo o que a física usa passa para coordenadas de mundo.
+  const keys = ['minX', 'maxX', 'minZ', 'maxZ', 'zMin', 'zMax', 'minY', 'maxY', 'y', 'yBottom', 'yTop'];
+  for (const rect of [...colliders, ...zones, ...ramps]) {
+    for (const k of keys) if (rect[k] !== undefined) rect[k] *= SCALE;
+  }
+
   return {
     colliders,
-    zones: [
-      // corredor ( dividido para não “puxar” o jogador para o andar de cima
-      // quando ele estiver embaixo, na boca da escada )
-      { minX: -hw + 0.2, maxX: stairX0, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY },
-      { minX: stairX0, maxX: stairX1, minZ: -hd + 0.2, maxZ: stairZ0, y: upperY },
-      { minX: stairX1, maxX: -0.7, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY },
-      // quarto
-      { minX: -0.7, maxX: hw - 0.2, minZ: -hd + 0.2, maxZ: 1.2, y: upperY },
-      // porão
-      { minX: -hw, maxX: hw, minZ: -hd, maxZ: hd, y: 0 },
-    ],
-    ramps: [{
-      minX: stairX0, maxX: stairX1,
-      zMin: stairZ0, zMax: stairZ1,
-      yBottom: 0, yTop: upperY, steps,
-    }],
+    zones,
+    ramps,
     update(t) { for (const fn of anim) fn(t); },
-    spawn: { x: 0, z: 2.15, y: 0, yaw: 0 }, // olhando para a janela (parede do fundo)
+    spawn: { x: 0, z: 2.15 * SCALE, y: 0, yaw: 0 }, // olhando para a janela (parede do fundo)
   };
 }
