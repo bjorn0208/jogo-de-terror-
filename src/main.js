@@ -66,6 +66,13 @@ const viewDir = new THREE.Vector3();
 let started = false, paused = false, flashOn = true, elapsed = 0;
 let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 
+// Brilho ajustável (20% a 180%). Guarda a preferência entre recarregamentos.
+let brightness = 1;
+try {
+  const saved = parseFloat(localStorage.getItem('porao.brightness'));
+  if (Number.isFinite(saved)) brightness = Math.min(1.8, Math.max(0.2, saved));
+} catch (_) { /* localStorage pode não existir */ }
+
 /* ---- Lanterna ------------------------------------------------------- */
 function createTorch(tex) {
   const g = new THREE.Group();
@@ -153,10 +160,11 @@ function updateFlashlight(t, bob) {
   const jitter = 1 + Math.sin(t * 17.3) * 0.005 + Math.sin(t * 31.7) * 0.003;
   let intensity = FLASH_INTENSITY * jitter;
   if (t < flickerUntil) intensity *= 0.45 + Math.random() * 0.35;
-  flash.intensity = intensity;
-  spill.intensity = 5 * (intensity / FLASH_INTENSITY);
-  pointLight.intensity = 0.25 * (intensity / FLASH_INTENSITY);
-  glow.material.opacity = 0.45 * (intensity / FLASH_INTENSITY);
+  const power = (intensity / FLASH_INTENSITY) * brightness;
+  flash.intensity = FLASH_INTENSITY * power;
+  spill.intensity = 5 * power;
+  pointLight.intensity = 0.25 * power;
+  glow.material.opacity = 0.45 * power;
 
   // Alvo quase fixo: o sway mexe a lanterna na mão, não a direção do feixe.
   const sx = controls.sway.x, sy = controls.sway.y;
@@ -179,6 +187,9 @@ function showHint(text, seconds = 5) {
 function updateStatus() {
   $('flash-state').textContent = flashOn ? 'LIGADA' : 'DESLIGADA';
   $('sound-state').textContent = audio.muted ? 'MUTADO' : 'LIGADO';
+  const pct = Math.round(brightness * 100) + '%';
+  $('bright-state').textContent = pct;
+  $('bright-value').textContent = pct;
 }
 
 function toggleFlash() {
@@ -192,6 +203,13 @@ function toggleFlash() {
 function toggleSound() {
   audio.setMuted(!audio.muted);
   updateStatus();
+}
+
+function adjustBrightness(delta) {
+  brightness = Math.min(1.8, Math.max(0.2, Math.round((brightness + delta) * 10) / 10));
+  try { localStorage.setItem('porao.brightness', String(brightness)); } catch (_) { /* ignora */ }
+  updateStatus();
+  showHint('BRILHO ' + Math.round(brightness * 100) + '%', 1.2);
 }
 
 function maybeHint() {
@@ -271,6 +289,8 @@ document.addEventListener('pointerlockchange', () => {
 if (isTouch) {
   controls.bindTouch($('stick'), $('stick-knob'), $('lookzone'));
   $('btn-flash').addEventListener('click', toggleFlash);
+  $('btn-dim').addEventListener('click', (e) => { e.preventDefault(); adjustBrightness(-0.1); });
+  $('btn-lumen').addEventListener('click', (e) => { e.preventDefault(); adjustBrightness(0.1); });
   const run = $('btn-run'), crouch = $('btn-crouch');
   const hold = (el, code) => {
     el.addEventListener('pointerdown', (e) => { e.preventDefault(); controls.keys.add(code); el.classList.add('active'); });
@@ -319,11 +339,13 @@ function animate() {
 
   if (controls.consume('flash')) toggleFlash();
   if (controls.consume('sound')) toggleSound();
+  if (controls.consume('brightDown')) adjustBrightness(-0.1);
+  if (controls.consume('brightUp')) adjustBrightness(0.1);
 
   if (room) {
     room.update(elapsed);
     updateFlashlight(elapsed, bob);
-    atmosphere.update(elapsed, flashOn);
+    atmosphere.update(elapsed, flashOn, brightness);
   }
   renderFrame(elapsed);
 }

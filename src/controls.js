@@ -42,6 +42,8 @@ export class Controls {
       if (k === 'KeyF') this.actions.add('flash');
       if (k === 'KeyM') this.actions.add('sound');
       if (k === 'KeyC') this.crouch = !this.crouch;
+      if (k === 'Minus' || k === 'NumpadSubtract' || k === 'BracketLeft') this.actions.add('brightDown');
+      if (k === 'Equal' || k === 'NumpadAdd' || k === 'BracketRight') this.actions.add('brightUp');
     };
     this._onKeyUp = (e) => this.keys.delete(e.code);
     document.addEventListener('mousemove', this._onMouse);

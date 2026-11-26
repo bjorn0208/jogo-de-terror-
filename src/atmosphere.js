@@ -28,9 +28,9 @@ export function createAtmosphere(scene, camera, tex, roomSize, lowEnd = false) {
 
   return {
     beam,
-    update(time, flashlightOn) {
+    update(time, flashlightOn, brightness = 1) {
       beam.visible = flashlightOn;
-      mat.opacity = 0.04 + Math.sin(time * 7.3) * 0.001 + Math.sin(time * 2.1) * 0.0015;
+      mat.opacity = (0.04 + Math.sin(time * 7.3) * 0.001 + Math.sin(time * 2.1) * 0.0015) * brightness;
     },
   };
 }

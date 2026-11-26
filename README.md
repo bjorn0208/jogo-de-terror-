@@ -18,11 +18,12 @@ sem internet). Clique em **ENTRAR NO PORÃO**.
 | `Shift` | correr |
 | `C` | agachar |
 | `F` | ligar/desligar a lanterna |
+| `-` / `+` | diminuir/aumentar o brilho (20% a 180%) |
 | `M` | ligar/desligar o som |
 | `Esc` | pausar |
 
 No celular: joystick à esquerda, arraste à direita para olhar e botões de
-luz/correr/agachar.
+luz/correr/agachar, mais `−` / `+` para o brilho.
 
 Use fone de ouvido: o áudio é gerado em tempo real (drone grave, passos com
 eco de porão, goteiras e rangidos).
@@ -36,10 +37,11 @@ eco de porão, goteiras e rangidos).
 - **Texturas 100% procedurais**: cor, normal e rugosidade geradas em canvas
   (umidade, rachaduras, ferrugem, veios de madeira, cascalho). Nenhum asset
   externo é baixado.
-- Lanterna com `SpotLight`, sombras suaves, tremor de passo, contato frouxo
-  (pequenas quedas de luz) e cone de feixe muito sutil.
-- Poeira suspensa que só aparece dentro do feixe.
-- Névoa, pós-processamento com grão de filme, vinheta, aberração cromática e
+- Lanterna com `SpotLight`, queda física, reflector suave (cookie), spill,
+  sombras suaves, tremor de passo, contato frouxo e **brilho ajustável em jogo**
+  (o valor fica salvo para a próxima partida).
+- Ar limpo: sem névoa e sem poeira. Só um feixe visível muito sutil.
+- Pós-processamento com grão de filme, vinheta, aberração cromática e
   coloração verde-amarelada doente.
 - Colisão com paredes e objetos, passo com head-bob, agachamento e corrida.
 - Áudio procedural com reverberação sintética de porão.
@@ -50,8 +52,8 @@ eco de porão, goteiras e rangidos).
 ## No celular
 
 Detecção automática de toque: joystick à esquerda, arraste à direita para
-olhar, botões de luz/correr/agachar. Também reduz resolução das texturas
-(256 px), poeira (220 partículas), sombra (512 px) e desliga antialias para o
+olhar, botões de luz/correr/agachar e `−` / `+` de brilho. Também reduz
+resolução das texturas (256 px), sombra (512 px) e desliga antialias para o
 jogo carregar e rodar mais rápido. O pós-processamento tem fallback para
 render direto caso o aparelho não suporte.
 

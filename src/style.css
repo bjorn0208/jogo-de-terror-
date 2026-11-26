@@ -43,7 +43,7 @@ body{font-family:"Courier New",Courier,monospace;cursor:default}
 }
 #status .label{color:rgba(190,196,172,.32);margin-right:7px}
 #status .sep{margin:0 12px;color:rgba(190,196,172,.2)}
-#flash-state,#sound-state{color:var(--acid)}
+#flash-state,#sound-state,#bright-state{color:var(--acid)}
 #hint{
   position:absolute;left:50%;bottom:70px;transform:translateX(-50%);
   font-size:12px;letter-spacing:.1em;color:rgba(205,210,188,.72);
@@ -101,6 +101,16 @@ button:disabled{opacity:.45;cursor:wait}
   background:rgba(12,17,13,.55);border-color:rgba(160,175,140,.28)
 }
 #touch-buttons button.active{background:rgba(80,95,65,.65);color:#fff}
+#bright-row{
+  display:flex;align-items:center;gap:4px;width:86px;margin-top:2px
+}
+#bright-row button{
+  width:26px;flex:0 0 26px;padding:8px 0;font-size:15px;letter-spacing:0;line-height:1
+}
+#bright-row span{
+  flex:1;text-align:center;font-size:9px;letter-spacing:.06em;color:var(--acid);
+  text-shadow:0 1px 3px #000
+}
 
 #pause{
   position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;

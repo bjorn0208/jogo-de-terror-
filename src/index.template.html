@@ -20,6 +20,7 @@
   <div id="status">
     <span class="label">LANTERNA</span><span id="flash-state">LIGADA</span>
     <span class="sep">|</span><span class="label">SOM</span><span id="sound-state">LIGADO</span>
+    <span class="sep">|</span><span class="label">BRILHO</span><span id="bright-state">100%</span>
   </div>
   <div id="hint"></div>
 </div>
@@ -36,6 +37,7 @@
       <div><b>SHIFT</b><span>correr</span></div>
       <div><b>C</b><span>agachar</span></div>
       <div><b>F</b><span>lanterna</span></div>
+      <div><b>- / +</b><span>brilho da lanterna</span></div>
       <div><b>M</b><span>som</span></div>
       <div><b>ESC</b><span>pausar</span></div>
     </div>
@@ -51,6 +53,11 @@
     <button id="btn-flash">LUZ</button>
     <button id="btn-run">CORRER</button>
     <button id="btn-crouch">AGACHAR</button>
+    <div id="bright-row">
+      <button id="btn-dim" aria-label="Diminuir brilho">&minus;</button>
+      <span id="bright-value">100%</span>
+      <button id="btn-lumen" aria-label="Aumentar brilho">+</button>
+    </div>
   </div>
 </div>
 
