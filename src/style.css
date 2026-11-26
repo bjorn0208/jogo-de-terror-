@@ -164,6 +164,34 @@ button:disabled{opacity:.45;cursor:wait}
 #safe-keys button{padding:11px 0;font-size:14px;letter-spacing:.05em}
 #safe > div > button{padding:10px 20px}
 
+#paper{
+  position:fixed;inset:0;z-index:14;display:none;align-items:center;justify-content:center;
+  background:rgba(2,3,2,.9);padding:20px
+}
+#paper.visible{display:flex}
+#paper .sheet{
+  width:min(420px,92vw);padding:34px 30px 26px;text-align:center;
+  color:#2a2418;background:
+    repeating-linear-gradient(0deg,rgba(90,70,40,.035) 0 2px,transparent 2 5px),
+    linear-gradient(135deg,#c9c09c,#a99f79 55%,#bdb38d);
+  border:1px solid #8f8460;box-shadow:0 22px 70px #000,inset 0 0 60px rgba(80,60,30,.24);
+  transform:rotate(-1deg);font-family:"Courier New",Courier,monospace
+}
+#paper .sheet-head{
+  font-size:10px;letter-spacing:.4em;color:#6b5b3a;border-bottom:1px solid rgba(80,60,30,.3);
+  padding-bottom:14px;margin-bottom:26px
+}
+#paper-text{font-size:16px;line-height:2;letter-spacing:.06em;min-height:90px}
+#paper-text .num{
+  display:inline-block;padding:0 10px;margin:0 4px;color:#7a1710;font-weight:700;
+  background:rgba(150,40,25,.12);border:2px solid rgba(122,23,16,.5);
+  transform:rotate(-2deg);font-size:22px
+}
+#paper button{
+  margin-top:26px;color:#d3d6c2;background:rgba(30,38,30,.75);
+  border-color:rgba(90,100,75,.5)
+}
+
 #death,#win{
   position:fixed;inset:0;z-index:12;display:none;align-items:center;justify-content:center;
   text-align:center;padding:24px

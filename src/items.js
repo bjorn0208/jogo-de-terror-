@@ -40,6 +40,23 @@ function paperTexture() {
   return t;
 }
 
+function batteryBoxTexture() {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 128;
+  const x = c.getContext('2d');
+  x.fillStyle = '#15552f'; x.fillRect(0, 0, 256, 128);
+  x.fillStyle = '#247d43'; x.fillRect(0, 0, 256, 20);
+  x.fillStyle = '#0d3a20'; x.fillRect(0, 112, 256, 16);
+  x.strokeStyle = 'rgba(235,235,205,.45)'; x.lineWidth = 4;
+  x.strokeRect(7, 28, 242, 78);
+  x.fillStyle = '#eae6c4'; x.textAlign = 'center';
+  x.font = 'bold 38px monospace'; x.fillText('PILHAS', 128, 66);
+  x.font = 'bold 24px monospace'; x.fillText('AA  x2', 128, 96);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 export function createItems(scene) {
   const group = new THREE.Group();
   group.scale.setScalar(SCALE);
@@ -50,20 +67,30 @@ export function createItems(scene) {
   const dark = new THREE.MeshStandardMaterial({ color: 0x24261f, roughness: 0.9 });
   const steel = new THREE.MeshStandardMaterial({ color: 0x4b4f47, roughness: 0.55, metalness: 0.75 });
   const keyMat = new THREE.MeshStandardMaterial({ color: 0x9a947e, roughness: 0.4, metalness: 0.8 });
+  const copper = new THREE.MeshStandardMaterial({ color: 0xb87333, roughness: 0.35, metalness: 0.85 });
+  const greenBox = new THREE.MeshStandardMaterial({ color: 0x1c6b3a, roughness: 0.65 });
+  const greenLabel = new THREE.MeshStandardMaterial({ map: batteryBoxTexture(), roughness: 0.8 });
   const paperMat = new THREE.MeshStandardMaterial({
     map: paperTexture(), roughness: 1, side: THREE.DoubleSide,
   });
 
   function battery(x, z, y = 0.05, rot = 0) {
     const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.036, 0.11, 12), wrap);
-    body.rotation.z = Math.PI / 2; g.add(body);
-    const nub = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.014, 10), tip);
-    nub.rotation.z = Math.PI / 2; nub.position.x = 0.061; g.add(nub);
-    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.037, 0.022, 12), dark);
-    band.rotation.z = Math.PI / 2; band.position.x = -0.028; g.add(band);
+    // caixa verde com rótulo "PILHAS AA" na frente e atrás
+    const faces = [greenBox, greenBox, greenBox, greenBox, greenLabel, greenLabel];
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.075, 0.14), faces);
+    g.add(box);
+    // duas pilhas AA deitadas dentro, com anel escuro e contato de cobre
+    for (const zz of [-0.034, 0.034]) {
+      const cell = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.027, 0.105, 14), tip);
+      cell.rotation.z = Math.PI / 2; cell.position.set(0, 0.048, zz); g.add(cell);
+      const band = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.028, 0.02, 14), dark);
+      band.rotation.z = Math.PI / 2; band.position.set(-0.02, 0.048, zz); g.add(band);
+      const nub = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, 0.01, 10), copper);
+      nub.rotation.z = Math.PI / 2; nub.position.set(0.057, 0.048, zz); g.add(nub);
+    }
     g.position.set(x, y, z);
-    g.rotation.set(Math.PI / 2, rot, 0);
+    g.rotation.y = rot;
     g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     group.add(g);
     return { mesh: g, position: new THREE.Vector3(x * SCALE, y * SCALE, z * SCALE), taken: false };

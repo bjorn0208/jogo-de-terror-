@@ -7,6 +7,10 @@ export class HorrorAudio {
     this.muted = false;
     this.nextEvent = 9;
     this.time = 0;
+    // Áudios embutidos no build (links enviados) e camadas de fundo ativas.
+    this.audioUrls = null;
+    this.beds = {};
+    this.bedNodes = {};
   }
 
   init() {
@@ -30,9 +34,79 @@ export class HorrorAudio {
     this.dry.connect(this.master);
 
     this.noiseBuf = this._noise(2);
+    this.audioUrls = window.__PORAO_AUDIO__ || null;
     this._drone();
     this._roomTone();
     this.ready = true;
+  }
+
+  /* ---- Áudios embutidos --------------------------------------------- */
+  async _loadBed(name) {
+    if (!this.ready || this.beds[name]) return this.beds[name] || null;
+    const url = this.audioUrls && this.audioUrls[name];
+    if (!url) return null;
+    try {
+      const res = await fetch(url);
+      const buf = await res.arrayBuffer();
+      const decoded = await this.ctx.decodeAudioData(buf);
+      this.beds[name] = decoded;
+      return decoded;
+    } catch (err) {
+      console.warn('Áudio "' + name + '" indisponível:', err);
+      return null;
+    }
+  }
+
+  async playBed(name, volume = 0.32, fade = 2) {
+    if (!this.ready) return;
+    const buffer = await this._loadBed(name);
+    if (!buffer) return;
+    this.stopBeds(Math.max(0.3, fade * 0.4));
+    const ctx = this.ctx, t = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer; src.loop = true;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(volume, t + fade);
+    src.connect(g); g.connect(this.master);
+    src.start();
+    this.bedNodes[name] = { src, g };
+  }
+
+  stopBeds(fade = 0.5) {
+    if (!this.ready) return;
+    const t = this.ctx.currentTime;
+    for (const node of Object.values(this.bedNodes)) {
+      try {
+        node.g.gain.cancelScheduledValues(t);
+        node.g.gain.setValueAtTime(node.g.gain.value, t);
+        node.g.gain.linearRampToValueAtTime(0, t + fade);
+        node.src.stop(t + fade + 0.05);
+      } catch (_) { /* já parou */ }
+    }
+    this.bedNodes = {};
+  }
+
+  async playOneShot(name, volume = 0.9) {
+    if (!this.ready) return;
+    const buffer = await this._loadBed(name);
+    if (!buffer) return;
+    const src = this.ctx.createBufferSource(); src.buffer = buffer;
+    const g = this.ctx.createGain(); g.gain.value = volume;
+    src.connect(g); g.connect(this.master);
+    src.start();
+  }
+
+  /** Fundo ao iniciar a partida. */
+  playStartBed() { this.playBed('start', 0.3, 2.5); }
+
+  /** Fundo depois da quinta folha. */
+  playForestBed() { this.playBed('forest', 0.34, 2.5); }
+
+  /** Última pilha morreu sem reservas. */
+  playBatteryDead() {
+    this.stopBeds(0.35);
+    this.playOneShot('death', 0.95);
   }
 
   resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }

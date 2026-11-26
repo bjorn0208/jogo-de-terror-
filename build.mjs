@@ -8,6 +8,18 @@ const watch = process.argv.includes('--watch');
 const tpl = await readFile(join(root, 'src/index.template.html'), 'utf8');
 const css = await readFile(join(root, 'src/style.css'), 'utf8');
 
+// Áudios dos links do usuário, embutidos como data URI para o jogo
+// continuar funcionando offline em um único arquivo.
+const audio = {};
+for (const name of ['death', 'start', 'forest']) {
+  try {
+    const buf = await readFile(join(root, 'assets/audio', name + '.mp3'));
+    audio[name] = 'data:audio/mpeg;base64,' + buf.toString('base64');
+  } catch (err) {
+    console.warn('Áudio ' + name + ' não encontrado; usando apenas síntese.');
+  }
+}
+
 const options = {
   entryPoints: [join(root, 'src/main.js')],
   outfile: 'bundle.js',
@@ -28,6 +40,7 @@ const options = {
         // bundle minificado sejam interpretados como padrões do String.replace.
         const html = tpl
           .replace('/*__STYLE__*/', () => css)
+          .replace('/*__AUDIO__*/', () => JSON.stringify(audio))
           .replace('/*__BUNDLE__*/', () => safeJs);
         await writeFile(join(root, 'index.html'), html);
         console.log(`index.html gerado (${(html.length / 1024).toFixed(0)} KB)`);

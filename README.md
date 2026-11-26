@@ -35,9 +35,18 @@ cômodo e outra ao lado da porta de saída. Quando a atual morre, a reserva entr
 automaticamente. Se acabar a última pilha, o monstro vem e te mata.
 
 As **folhas** são as pistas do cofre: cada uma tem um número destacado no meio
-do texto e diz qual posição ele ocupa. O **cofre está em cima da bancada na sala
-de baixo** e guarda a chave da porta. Abra-o com `E`/**PEGAR**, digite os
-quatro números na ordem das folhas, pegue a chave e use-a na porta de saída.
+do texto e diz qual posição ele ocupa. Ao apertar para ler, a folha aparece em
+primeiro plano na sua frente (`Enter`, `Espaço` ou `Esc` para guardar). O **cofre
+está em cima da bancada na sala de baixo** e guarda a chave da porta. Abra-o com
+`E`/**PEGAR**, digite os quatro números na ordem das folhas, pegue a chave e
+use-a na porta de saída.
+
+**Áudios:** ao entrar toca o fundo de "cena de assassino"; ao ler a quinta
+folha o fundo muda para a "floresta escura"; quando a última pilha morre toca o
+som de luta. Eles vêm embutidos no `index.html` (um único arquivo, sem internet).
+
+As pilhas vêm numa **caixa verde com rótulo "PILHAS AA"**, com duas pilhas AA
+realistas (corpo prateado, anel escuro e contato de cobre) dentro dela.
 
 Use fone de ouvido: o áudio é gerado em tempo real (drone grave, passos com
 eco de porão, goteiras, rangidos da escada e guinchos de rato).

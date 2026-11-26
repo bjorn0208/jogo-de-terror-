@@ -87,7 +87,7 @@ let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 let batterySeconds = BATTERY_SECONDS, spares = 0, hasKey = false;
 let lowWarned = false, doomed = false, doomTimer = 0;
 let scareTimer = 0, shake = 0, creakStep = 0, statusClock = 0;
-let safeUI = false, safeInput = '', activeTarget = null, actionLabel = '';
+let safeUI = false, safeInput = '', paperUI = false, activeTarget = null, actionLabel = '';
 const saidPhrases = new Set();
 const doorPos = new THREE.Vector3(-1.85 * SCALE, 0, 3.4 * SCALE);
 const creakMarks = [1.6, 0.2, -1.2].map((z) => z * SCALE);
@@ -230,12 +230,25 @@ function showPhrase(id, text, seconds = 4) {
   showHint(text, seconds);
 }
 
-/** Folha lida pelo jogador: o número vai destacado no meio do texto. */
-function showPaper(note) {
+/** Folha aberta na frente do jogador, com o número destacado. */
+function openPaperUI(note) {
   const html = note.text.replace('{{n}}', '<b class="num">' + note.number + '</b>');
-  hintEl.innerHTML = html;
-  hintEl.classList.add('show', 'paper');
-  hintTimer = 9;
+  $('paper-text').innerHTML = html;
+  $('paper').classList.add('visible');
+  paperUI = true;
+  paused = true;
+  controls.enabled = false;
+  if (!isTouch && document.pointerLockElement) document.exitPointerLock();
+}
+
+function closePaperUI() {
+  if (!paperUI) return;
+  paperUI = false;
+  $('paper').classList.remove('visible');
+  paused = false;
+  controls.enabled = true;
+  if (!isTouch) controls.requestLock();
+  clock.getDelta();
 }
 
 function updateStatus() {
@@ -291,14 +304,14 @@ function updateBattery(dt) {
   } else {
     doomed = true;
     doomTimer = 4.5;
-    audio.growl();
+    audio.playBatteryDead();
     showPhrase('dead', 'A pilha morreu. Passos se aproximam.', 5);
   }
 }
 
 /* ---- Interação (botão PEGAR / tecla E) ------------------------------ */
 function findInteractable() {
-  if (!items || !started || finished || safeUI) return null;
+  if (!items || !started || finished || safeUI || paperUI) return null;
   const p = camera.position;
   let best = null, bestD = Infinity;
   const consider = (type, obj, label, range) => {
@@ -334,7 +347,7 @@ function updateActionUI() {
 }
 
 function interact() {
-  if (!started || finished || safeUI) return;
+  if (!started || finished || safeUI || paperUI) return;
   const t = activeTarget || findInteractable();
   if (!t) return;
 
@@ -360,7 +373,9 @@ function interact() {
   } else if (t.type === 'paper') {
     t.obj.read = true;
     audio.paper();
-    showPaper(t.obj);
+    openPaperUI(t.obj);
+    // a quinta folha muda o fundo sonoro
+    if (items.papers.indexOf(t.obj) === 4) audio.playForestBed();
   } else if (t.type === 'safe') {
     openSafeUI();
   } else if (t.type === 'door') {
@@ -442,7 +457,7 @@ function checkStairCreaks() {
 }
 
 function tryUseKey() {
-  if (!started || finished || safeUI || !items) return;
+  if (!started || finished || safeUI || paperUI || !items) return;
   const p = camera.position;
   const dist = Math.hypot(p.x - doorPos.x, p.z - doorPos.z);
   if (!hasKey) {
@@ -454,6 +469,7 @@ function tryUseKey() {
     return;
   }
   audio.unlock();
+  audio.stopBeds(0.6);
   items.padlock.visible = false;
   finished = true;
   started = false;
@@ -470,7 +486,8 @@ function gameOver(detail) {
   started = false;
   paused = true;
   controls.enabled = false;
-  audio.growl();
+  audio.stopBeds(0.4);
+  if (!doomed) audio.growl();
   $('death-detail').textContent = detail;
   $('death').classList.add('visible');
   hud.classList.remove('visible');
@@ -546,6 +563,7 @@ function startGame() {
   if (!room) { build(); return; }
   audio.init();
   audio.resume();
+  audio.playStartBed();
   started = true;
   paused = false;
   overlay.classList.remove('visible');
@@ -568,8 +586,9 @@ function restartGame() {
   lowWarned = false; doomed = false; doomTimer = 0;
   scareTimer = 0; shake = 0; creakStep = 0; statusClock = 0;
   flickerUntil = -1;
-  safeUI = false; safeInput = ''; activeTarget = null; actionLabel = '';
+  safeUI = false; safeInput = ''; paperUI = false; activeTarget = null; actionLabel = '';
   $('safe').classList.remove('visible');
+  $('paper').classList.remove('visible');
   $('action').classList.remove('show');
   saidPhrases.clear();
   finished = false;
@@ -592,6 +611,8 @@ function restartGame() {
   paused = false;
   hud.classList.add('visible');
   audio.resume();
+  audio.stopBeds();
+  audio.playStartBed();
   updateStatus();
   showPhrase('restart', 'De novo. Dessa vez, não perca a luz.', 5);
   if (!isTouch) controls.requestLock();
@@ -610,9 +631,9 @@ document.addEventListener('pointerlockchange', () => {
   if (!started || isTouch) return;
   const locked = document.pointerLockElement === canvas;
   paused = !locked;
-  controls.enabled = locked && !safeUI;
-  pauseEl.classList.toggle('visible', !locked && !safeUI);
-  hud.classList.toggle('visible', locked && !safeUI);
+  controls.enabled = locked && !safeUI && !paperUI;
+  pauseEl.classList.toggle('visible', !locked && !safeUI && !paperUI);
+  hud.classList.toggle('visible', locked && !safeUI && !paperUI);
   if (locked) audio.resume();
 });
 
@@ -644,7 +665,14 @@ for (const btn of document.querySelectorAll?.('#safe-keys [data-d]') || []) {
 $('safe-back').addEventListener('click', safeBack);
 $('safe-ok').addEventListener('click', safeSubmit);
 $('safe-close').addEventListener('click', closeSafeUI);
+$('paper-close').addEventListener('click', closePaperUI);
 document.addEventListener('keydown', (e) => {
+  if (paperUI) {
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); closePaperUI();
+    }
+    return;
+  }
   if (!safeUI) return;
   if (/^[0-9]$/.test(e.key)) { e.preventDefault(); safeDigit(e.key); }
   else if (e.key === 'Backspace') { e.preventDefault(); safeBack(); }
@@ -692,7 +720,7 @@ function animate() {
     camera.position.y = 1.62 + Math.sin(elapsed * 0.6) * 0.012;
   }
 
-  if ((!started || paused || safeUI) && actionLabel) {
+  if ((!started || paused || safeUI || paperUI) && actionLabel) {
     actionLabel = ''; activeTarget = null; $('action').classList.remove('show');
   }
   if (hintTimer > 0) {
