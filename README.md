@@ -32,8 +32,8 @@ usar chave).
 **Objetivo:** cada pilha dura 2 minutos. Com 10 segundos restantes a luz começa
 a piscar. Há 3 pilhas escondidas: uma em cima da cama, outra no fundo do último
 cômodo e outra ao lado da porta de saída. Quando a atual morre, a reserva entra
-automaticamente. Se acabar a última pilha, você morre no escuro — o som de luta
-já avisa, sem monstro.
+automaticamente. Se acabar a última pilha, um vídeo ocupa a tela; quando ele
+termina, toca o som da morte e aparece a tela final. Sem monstro.
 
 A **folha única** está pregada na parede da divisão, do lado do quarto (andar
 de cima). Ao apertar para ler, aparece **apenas a imagem** da folha suja
@@ -43,9 +43,11 @@ ordem certa, e ela vem embutida no `index.html`, sem internet. O **cofre está e
 e guarda a chave da porta. Abra-o com `E`/**PEGAR**, digite os quatro números da
 folha, pegue a chave e desça para usar na porta de saída.
 
-**Áudios:** ao entrar toca o fundo de "cena de assassino"; ao ler a folha do
-quarto o fundo muda para a "floresta escura"; quando a última pilha morre toca o
-som de luta. Eles vêm embutidos no `index.html` (um único arquivo, sem internet).
+**Áudios/vídeo:** ao entrar toca o fundo de "cena de assassino"; ao ler a folha
+do quarto o fundo muda para a "floresta escura"; ao acabar a última pilha aparece
+o vídeo enviado e, no fim dele, toca o som de luta. Tudo vem embutido no
+`index.html` (um único arquivo, sem internet). O vídeo roda sem áudio para
+poder iniciar sozinho; o som da morte toca depois dele.
 
 As pilhas vêm numa **caixa verde com rótulo "PILHAS AA"**, com duas pilhas AA
 realistas (corpo prateado, anel escuro e contato de cobre) dentro dela.

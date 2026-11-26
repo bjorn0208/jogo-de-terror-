@@ -86,7 +86,7 @@ let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 
 /* ---- Partida: pilha, chave, frases ditas uma única vez ---------------- */
 let batterySeconds = BATTERY_SECONDS, spares = 0, hasKey = false;
-let lowWarned = false, doomed = false, doomTimer = 0;
+let lowWarned = false, doomed = false, doomTimer = 0, deathVideoPlaying = false;
 let shake = 0, creakStep = 0, statusClock = 0;
 let safeUI = false, safeInput = '', paperUI = false, activeTarget = null, actionLabel = '';
 const saidPhrases = new Set();
@@ -259,6 +259,33 @@ function closePaperUI() {
   clock.getDelta();
 }
 
+/** Fim do vídeo da última pilha: só então toca o som da morte. */
+function finishDeathVideo() {
+  if (!deathVideoPlaying) return;
+  deathVideoPlaying = false;
+  const v = $('death-video-el');
+  v.pause();
+  $('death-video').classList.remove('visible');
+  audio.playDeath();
+  gameOver('A última pilha morreu. O escuro te encontrou.');
+}
+
+function playDeathVideo() {
+  const src = window.__PORAO_DEATH_VIDEO__ || '';
+  if (!src) { audio.playBatteryDead(); return; }
+  deathVideoPlaying = true;
+  paused = true;
+  controls.enabled = false;
+  if (!isTouch && document.pointerLockElement) document.exitPointerLock();
+  const v = $('death-video-el');
+  v.src = src;
+  try { v.currentTime = 0; } catch (_) { /* vídeo ainda sem metadata */ }
+  v.muted = true;
+  $('death-video').classList.add('visible');
+  const p = v.play();
+  if (p && p.catch) p.catch(finishDeathVideo);
+}
+
 function updateStatus() {
   $('flash-state').textContent = flashOn ? 'LIGADA' : 'DESLIGADA';
   $('sound-state').textContent = audio.muted ? 'MUTADO' : 'LIGADO';
@@ -312,8 +339,9 @@ function updateBattery(dt) {
   } else {
     doomed = true;
     doomTimer = 4.5;
-    audio.playBatteryDead();
+    audio.stopBeds(0.35);
     showPhrase('dead', 'A pilha morreu. Passos se aproximam.', 5);
+    playDeathVideo();
   }
 }
 
@@ -583,6 +611,11 @@ function restartGame() {
   if (!room) return;
   $('death').classList.remove('visible');
   $('win').classList.remove('visible');
+  deathVideoPlaying = false;
+  const v = $('death-video-el');
+  v.pause();
+  v.removeAttribute('src');
+  $('death-video').classList.remove('visible');
   batterySeconds = BATTERY_SECONDS; spares = 0; hasKey = false;
   lowWarned = false; doomed = false; doomTimer = 0;
   shake = 0; creakStep = 0; statusClock = 0;
@@ -666,10 +699,19 @@ $('safe-back').addEventListener('click', safeBack);
 $('safe-ok').addEventListener('click', safeSubmit);
 $('safe-close').addEventListener('click', closeSafeUI);
 $('paper').addEventListener('click', closePaperUI);
+$('death-video-el').addEventListener('ended', finishDeathVideo);
+$('death-video-el').addEventListener('error', finishDeathVideo);
+$('death-video').addEventListener('click', finishDeathVideo);
 document.addEventListener('keydown', (e) => {
   if (paperUI) {
     if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
       e.preventDefault(); closePaperUI();
+    }
+    return;
+  }
+  if (deathVideoPlaying) {
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); finishDeathVideo();
     }
     return;
   }

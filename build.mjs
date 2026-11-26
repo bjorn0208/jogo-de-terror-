@@ -29,6 +29,15 @@ try {
   console.warn('Imagem da folha não encontrada; usando papel procedural.');
 }
 
+// Vídeo da última pilha, embutido para o jogo continuar offline.
+let deathVideo = '';
+try {
+  const buf = await readFile(join(root, 'assets/video/death.mp4'));
+  deathVideo = 'data:video/mp4;base64,' + buf.toString('base64');
+} catch (err) {
+  console.warn('Vídeo da morte não encontrado; usando apenas o som.');
+}
+
 const options = {
   entryPoints: [join(root, 'src/main.js')],
   outfile: 'bundle.js',
@@ -51,6 +60,7 @@ const options = {
           .replace('/*__STYLE__*/', () => css)
           .replace('/*__AUDIO__*/', () => JSON.stringify(audio))
           .replace('/*__PAPER__*/', () => JSON.stringify(paperImage))
+          .replace('/*__DEATH_VIDEO__*/', () => JSON.stringify(deathVideo))
           .replace('/*__BUNDLE__*/', () => safeJs);
         await writeFile(join(root, 'index.html'), html);
         console.log(`index.html gerado (${(html.length / 1024).toFixed(0)} KB)`);

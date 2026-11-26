@@ -103,11 +103,14 @@ export class HorrorAudio {
   /** Fundo depois de ler a folha única do quarto. */
   playForestBed() { this.playBed('forest', 0.34, 2.5); }
 
-  /** Última pilha morreu sem reservas. */
+  /** Última pilha morreu sem reservas (sem vídeo disponível). */
   playBatteryDead() {
     this.stopBeds(0.35);
-    this.playOneShot('death', 0.95);
+    this.playDeath();
   }
+
+  /** Som da morte, tocado depois do vídeo da última pilha. */
+  playDeath() { this.playOneShot('death', 0.95); }
 
   resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
 

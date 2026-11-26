@@ -166,6 +166,14 @@ button:disabled{opacity:.45;cursor:wait}
   filter:brightness(1.35) contrast(1.08)
 }
 
+#death-video{
+  position:fixed;inset:0;z-index:20;display:none;background:#000;cursor:pointer
+}
+#death-video.visible{display:block}
+#death-video video{
+  display:block;width:100vw;height:100vh;height:100dvh;object-fit:cover
+}
+
 #death,#win{
   position:fixed;inset:0;z-index:12;display:none;align-items:center;justify-content:center;
   text-align:center;padding:24px
