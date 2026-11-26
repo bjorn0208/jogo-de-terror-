@@ -83,8 +83,9 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   você vence. As frases automáticas da história aparecem **no máximo uma vez por
   partida** (as folhas podem ser relidas, pois são ação direta do jogador).
 - Sangue na cama e nas paredes do quarto, ratos que dão sustos curtos com
-  guincho e flash vermelho, rangidos ao subir a escada e uma lâmpada do andar de
-  cima que pisca a cada 30 segundos.
+  guincho e um tremor leve de câmera (sem flash vermelho), rangidos ao subir a
+  escada e uma lâmpada do andar de cima que pisca a cada 30 segundos. A entrada
+  da escada ao lado da porta ficou aberta, com mais espaço para passar.
 
 ## No celular
 

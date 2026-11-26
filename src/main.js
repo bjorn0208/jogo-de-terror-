@@ -87,7 +87,7 @@ let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 /* ---- Partida: pilha, chave, frases ditas uma única vez ---------------- */
 let batterySeconds = BATTERY_SECONDS, spares = 0, hasKey = false;
 let lowWarned = false, doomed = false, doomTimer = 0;
-let scareTimer = 0, shake = 0, creakStep = 0, statusClock = 0;
+let shake = 0, creakStep = 0, statusClock = 0;
 let safeUI = false, safeInput = '', paperUI = false, activeTarget = null, actionLabel = '';
 const saidPhrases = new Set();
 const doorPos = new THREE.Vector3(-1.85 * SCALE, 0, 3.4 * SCALE);
@@ -496,9 +496,8 @@ function gameOver(detail) {
 }
 
 function onScare() {
-  scareTimer = 0.25;
+  // susto sem flash vermelho: só um tremor curto de câmera
   shake = 0.5;
-  $('scare').classList.add('show');
 }
 
 function maybeHint() {
@@ -577,10 +576,9 @@ function restartGame() {
   if (!room) return;
   $('death').classList.remove('visible');
   $('win').classList.remove('visible');
-  $('scare').classList.remove('show');
   batterySeconds = BATTERY_SECONDS; spares = 0; hasKey = false;
   lowWarned = false; doomed = false; doomTimer = 0;
-  scareTimer = 0; shake = 0; creakStep = 0; statusClock = 0;
+  shake = 0; creakStep = 0; statusClock = 0;
   flickerUntil = -1;
   safeUI = false; safeInput = ''; paperUI = false; activeTarget = null; actionLabel = '';
   $('safe').classList.remove('visible');
@@ -718,10 +716,6 @@ function animate() {
   if (hintTimer > 0) {
     hintTimer -= dt;
     if (hintTimer <= 0) hintEl.classList.remove('show');
-  }
-  if (scareTimer > 0) {
-    scareTimer -= dt;
-    if (scareTimer <= 0) $('scare').classList.remove('show');
   }
   if (shake > 0) shake = Math.max(0, shake - dt * 1.6);
 
