@@ -383,32 +383,6 @@ export function glowTexture(size = 128) {
   return toTexture(c, { srgb: true });
 }
 
-export function dustSprite(size = 64) {
-  const c = makeCanvas(size), ctx = c.getContext('2d');
-  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  g.addColorStop(0, 'rgba(255,255,240,1)');
-  g.addColorStop(0.35, 'rgba(255,255,235,0.45)');
-  g.addColorStop(1, 'rgba(255,255,235,0)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
-  return toTexture(c, { srgb: true });
-}
-
-export function beamTexture(size = 128) {
-  const c = makeCanvas(size), ctx = c.getContext('2d');
-  // gradiente ao longo do cone + sujeira transversal
-  const g = ctx.createLinearGradient(0, 0, 0, size);
-  g.addColorStop(0, 'rgba(255,248,210,0.55)');
-  g.addColorStop(0.25, 'rgba(240,245,210,0.22)');
-  g.addColorStop(1, 'rgba(210,225,190,0)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
-  const r = rng(3);
-  for (let i = 0; i < 60; i++) {
-    ctx.fillStyle = `rgba(0,0,0,${r() * 0.16})`;
-    ctx.fillRect(r() * size, r() * size, 1 + r() * 3, 2 + r() * 16);
-  }
-  return toTexture(c, { srgb: true });
-}
-
 /** "Cookie" da lanterna: hotspot macio e reflector sujo, projetado na cena. */
 export function spotCookie(size = 128) {
   const c = makeCanvas(size), ctx = c.getContext('2d');
@@ -449,8 +423,6 @@ export function buildTextures(small = false) {
     cobweb: cobweb(),
     stain: stainTexture(),
     glow: glowTexture(),
-    dust: dustSprite(),
-    beam: beamTexture(),
     cookie: spotCookie(small ? 64 : 128),
   };
 }

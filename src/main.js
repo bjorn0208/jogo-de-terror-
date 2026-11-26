@@ -31,8 +31,8 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x040604);
-// Névoa em 10% do valor original: o ar ainda existe, mas não engole o feixe.
-scene.fog = new THREE.FogExp2(0x0a0f0c, 0.0043);
+// Ar limpo: sem névoa e sem poeira. Só a luz do facho desenha o volume.
+scene.fog = null;
 
 const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.05, 45);
 camera.rotation.order = 'YXZ';
