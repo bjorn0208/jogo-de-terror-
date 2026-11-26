@@ -233,7 +233,9 @@ function showPhrase(id, text, seconds = 4) {
 
 /** Folha aberta na frente do jogador, com o número destacado. */
 function openPaperUI(note) {
-  const html = note.text.replace('{{n}}', '<b class="num">' + note.number + '</b>');
+  const html = note.text
+    .replace(/\{\{(\d)\}\}/g, '<b class="num">$1</b>')
+    .replace(/\{\{n\}\}/g, '<b class="num">' + note.number + '</b>');
   $('paper-text').innerHTML = html;
   $('paper').classList.add('visible');
   paperUI = true;
@@ -375,8 +377,8 @@ function interact() {
     t.obj.read = true;
     audio.paper();
     openPaperUI(t.obj);
-    // a quinta folha muda o fundo sonoro
-    if (items.papers.indexOf(t.obj) === 4) audio.playForestBed();
+    // a folha do quarto muda o fundo sonoro
+    if (items.papers.indexOf(t.obj) === items.papers.length - 1) audio.playForestBed();
   } else if (t.type === 'safe') {
     openSafeUI();
   } else if (t.type === 'door') {
@@ -392,7 +394,7 @@ function openSafeUI() {
   safeUI = true;
   safeInput = '';
   $('safe-code').textContent = '· · · ·';
-  $('safe-msg').textContent = 'As folhas dizem a ordem. O número destacado é cada posição.';
+  $('safe-msg').textContent = 'A folha na parede do quarto diz a ordem. Os números destacados são os dígitos.';
   $('safe').classList.add('visible');
   paused = true;
   controls.enabled = false;
@@ -442,7 +444,7 @@ function safeSubmit() {
   } else {
     safeInput = '';
     audio.click(false);
-    $('safe-msg').textContent = 'Errado. Leia as folhas na ordem certa.';
+    $('safe-msg').textContent = 'Errado. Leia a folha do quarto na ordem certa.';
     refreshSafeUI();
   }
 }

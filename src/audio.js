@@ -100,7 +100,7 @@ export class HorrorAudio {
   /** Fundo ao iniciar a partida. */
   playStartBed() { this.playBed('start', 0.3, 2.5); }
 
-  /** Fundo depois da quinta folha. */
+  /** Fundo depois de ler a folha única do quarto. */
   playForestBed() { this.playBed('forest', 0.34, 2.5); }
 
   /** Última pilha morreu sem reservas. */

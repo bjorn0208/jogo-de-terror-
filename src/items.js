@@ -3,12 +3,12 @@ import { SCALE } from './room.js';
 
 export const BATTERY_SECONDS = 120;
 export const MAX_SPARES = 3;
-// Código do cofre: a ordem vem das quatro primeiras folhas.
+// Código do cofre: os quatro dígitos estão todos na folha única do quarto.
 export const SAFE_CODE = '7391';
 
-/* Objetos escondidos: pilhas, folhas com pistas, o cofre sobre o criado-mudo
-   do quarto e o cadeado na porta de saída. Tudo em coordenadas da casa
-   (BASE), escalado junto com ela. */
+/* Objetos escondidos: pilhas, a folha única com o código pregada na parede
+   do quarto, o cofre sobre o criado-mudo e o cadeado na porta de saída.
+   Tudo em coordenadas da casa (BASE), escalado junto com ela. */
 
 function paperTexture() {
   const c = document.createElement('canvas');
@@ -159,18 +159,13 @@ export function createItems(scene) {
   // a chave fica dentro do cofre até ele ser aberto
   const keyItem = key(3.1, 3.825, -2.79, false);
 
-  // cada folha tem um número destacado no meio do texto
+  // Uma folha só, pregada na parede da divisão, do lado do quarto.
+  // Os quatro dígitos vão entre as palavras, destacados um a um.
   const papers = [
-    note(2.55, 0.02, 0.95,
-      'PRIMEIRO — o cofre quer {{n}} antes de todos os outros números.', '7'),
-    note(-2.15, 0.02, 3.05,
-      'SEGUNDO — anotei {{n}} na mesma ordem em que guardei a chave.', '3'),
-    note(2.15, 1.4, -3.46,
-      'TERCEIRO — contei até {{n}} enquanto a lâmpada piscava.', '9', 0, 0),
-    note(-2.0, 3.02, -2.9,
-      'QUARTO — depois de {{n}} vem a chave. Não pule esta.', '1'),
-    note(1.05, 3.02, -1.35,
-      'Havia {{n}} folhas. Este número é só a quantidade — o cofre quer os outros quatro.', '5'),
+    note(-0.578, 4.45, -2.75,
+      'Deixei a chave no cofre do criado-mudo. Para abrir, siga a ordem: ' +
+      'primeiro {{7}}, depois {{3}}, a seguir {{9}} e por último {{1}}. ' +
+      'Está tudo aqui, numa folha só.', SAFE_CODE, 0, Math.PI / 2),
   ];
 
   // cadeado na porta de saída

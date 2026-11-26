@@ -92,8 +92,6 @@ export function createRoom(scene, tex) {
   // vão da escada: o teto do porão é o piso do andar de cima
   const stairX0 = -3.85, stairX1 = -2.65;
   const stairZ0 = -1.75, stairZ1 = 2.85;
-  // A lateral junto da porta fica aberta: mais espaço para entrar na escada.
-  const stairDoorOpenZ = 1.25;
   const upperY = h;
 
   slab(floorMat, -hw, hw, -hd, hd, 0, true);
@@ -167,25 +165,8 @@ export function createRoom(scene, tex) {
     box(darkWoodMat, stairX1 - stairX0 - 0.06, top, zFront - zBack,
       (stairX0 + stairX1) / 2, top / 2, (zFront + zBack) / 2, { cast: false });
   }
-  // corrimão só na parte de trás: junto da porta a lateral fica livre.
-  const railX = stairX1 - 0.07;
-  const railT = (stairZ1 - stairDoorOpenZ) / (stairZ1 - stairZ0);
-  const railLen = Math.hypot(stairDoorOpenZ - stairZ0, upperY * (1 - railT));
-  const railAngle = Math.atan2(upperY * (1 - railT), stairDoorOpenZ - stairZ0);
-  box(blackMetal, 0.055, 0.055, railLen, railX, upperY * (1 + railT) / 2 + 0.9,
-    (stairZ0 + stairDoorOpenZ) / 2, { rotX: railAngle, cast: false });
-  for (let i = 0; i <= steps; i += 3) {
-    const t = i / steps;
-    if (t > railT) continue;
-    box(blackMetal, 0.04, 0.9, 0.04, railX, upperY * t + 0.45,
-      stairZ1 - t * (stairZ1 - stairZ0), { cast: false });
-  }
-  // paredes laterais do poço da escada (só até o piso de cima).
-  // A da direita para antes da porta, deixando a entrada livre.
-  box(wallMat, 0.08, upperY, stairZ1 - stairZ0, stairX0, upperY / 2, (stairZ0 + stairZ1) / 2,
-    { collide: true, minY: 0, maxY: upperY });
-  box(wallMat, 0.08, upperY, stairDoorOpenZ - stairZ0, stairX1, upperY / 2, (stairZ0 + stairDoorOpenZ) / 2,
-    { collide: true, minY: 0, maxY: upperY });
+  // Sem madeiras/corrimão nas laterais: a escada fica totalmente aberta.
+  // Os degraus continuam guiando o caminho; nada mais aperta a passagem.
 
   /* ---- Andar de cima: corredor + quarto ------------------------------ */
   const uy = upperY, uh = h;

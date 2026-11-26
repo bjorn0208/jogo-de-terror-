@@ -35,15 +35,16 @@ cômodo e outra ao lado da porta de saída. Quando a atual morre, a reserva entr
 automaticamente. Se acabar a última pilha, você morre no escuro — o som de luta
 já avisa, sem monstro.
 
-As **folhas** são as pistas do cofre: cada uma tem um número destacado no meio
-do texto e diz qual posição ele ocupa. Ao apertar para ler, a folha aparece em
-primeiro plano na sua frente (`Enter`, `Espaço` ou `Esc` para guardar). O **cofre
-está em cima do criado-mudo no quarto** (andar de cima) e guarda a chave da
-porta. Abra-o com `E`/**PEGAR**, digite os quatro números na ordem das folhas,
-pegue a chave e desça para usar na porta de saída.
+A **folha única** está pregada na parede da divisão, do lado do quarto (andar
+de cima). Ela traz os quatro códigos destacados entre as palavras, na ordem
+certa. Ao apertar para ler, aparece uma folha de papel suja em primeiro plano na
+sua frente (`Enter`, `Espaço` ou `Esc` para guardar). O **cofre está em cima do
+criado-mudo no quarto** e guarda a chave da porta. Abra-o com `E`/**PEGAR**,
+digite os quatro números na ordem da folha, pegue a chave e desça para usar na
+porta de saída.
 
-**Áudios:** ao entrar toca o fundo de "cena de assassino"; ao ler a quinta
-folha o fundo muda para a "floresta escura"; quando a última pilha morre toca o
+**Áudios:** ao entrar toca o fundo de "cena de assassino"; ao ler a folha do
+quarto o fundo muda para a "floresta escura"; quando a última pilha morre toca o
 som de luta. Eles vêm embutidos no `index.html` (um único arquivo, sem internet).
 
 As pilhas vêm numa **caixa verde com rótulo "PILHAS AA"**, com duas pilhas AA
@@ -58,9 +59,9 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   piso de concreto, janela gradeada e a **única porta da casa** (a de saída,
   trancada, com o caminho livre de caixas). Também tem canos, caldeira,
   prateleiras, bancada, cadeira tombada, entulho, poças, manchas e teias.
-- Escada de 30 degraus com corrimão apenas na lateral (o caminho fica livre)
-  até um **andar superior** com corredor e quarto — o quarto é aberto, sem
-  porta nem batente. O jogador sobe e desce com altura de piso interpolada;
+- Escada de 30 degraus totalmente aberta: **sem madeiras laterais e sem
+  corrimão**. Sobe até um **andar superior** com corredor e quarto — o quarto é
+  aberto, sem porta nem batente. O jogador sobe e desce com piso interpolado;
   as colisões são separadas por andar. Móveis e jogador usam a mesma escala.
 - **Texturas 100% procedurais**: cor, normal e rugosidade geradas em canvas
   (umidade, rachaduras, ferrugem, veios de madeira, cascalho). Nenhum asset
@@ -76,12 +77,12 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
 - Áudio procedural com reverberação sintética de porão.
 - **Pilhas limitadas**: 2 min cada, aviso de 10 s piscando e troca automática
   das reservas. HUD mostra tempo restante, reservas e se você já tem a chave.
-- **Cofre com senha** sobre o criado-mudo do quarto: cinco folhas com números
-  destacados no meio do texto ensinam os quatro dígitos e a ordem. Ao abrir, a
-  chave aparece dentro dele; use-a na porta lá embaixo.
+- **Cofre com senha** sobre o criado-mudo do quarto: uma folha suja pregada na
+  parede da divisão traz os quatro dígitos destacados entre as palavras. Ao
+  abrir, a chave aparece dentro dele; use-a na porta lá embaixo.
 - **Chave + cadeado** na única porta de saída: sem a chave ela não abre; com ela
   você vence. As frases automáticas da história aparecem **no máximo uma vez por
-  partida** (as folhas podem ser relidas, pois são ação direta do jogador).
+  partida** (a folha pode ser relida, pois é ação direta do jogador).
 - Sangue na cama e nas paredes do quarto, ratos que dão sustos curtos com
   guincho e um tremor leve de câmera (sem flash vermelho), rangidos ao subir a
   escada e uma lâmpada do andar de cima que pisca a cada 30 segundos. A entrada
