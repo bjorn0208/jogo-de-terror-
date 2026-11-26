@@ -1,10 +1,36 @@
-/* Ar limpo: sem névoa, sem poeira suspensa e sem cone volumétrico.
-   O "volume" do porão agora vem só da luz que a lanterna realmente acerta.
-   Mantemos a mesma interface para não mexer no loop principal. */
+import * as THREE from 'three';
 
-export function createAtmosphere() {
+/* Ar limpo: sem névoa e sem pó. O que sobra é só o feixe da própria
+   lanterna — luz espalhada no ar, não bruma nem partícula. */
+
+export function createAtmosphere(scene, camera, tex, roomSize, lowEnd = false) {
+  const len = 14;
+  const radius = Math.tan(0.42) * len;
+  const geo = new THREE.ConeGeometry(radius, len, lowEnd ? 14 : 28, 1, true);
+  geo.translate(0, -len / 2, 0); // ponta na origem
+  geo.rotateX(Math.PI / 2);      // aponta para -Z (frente da câmera)
+
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex.beam,
+    color: 0xffe9c4,
+    transparent: true,
+    opacity: 0.035,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    fog: false,
+  });
+
+  const beam = new THREE.Mesh(geo, mat);
+  beam.position.set(0.1, -0.1, -0.08);
+  beam.renderOrder = 3;
+  camera.add(beam);
+
   return {
-    update() {},
-    beam: null,
+    beam,
+    update(time, flashlightOn) {
+      beam.visible = flashlightOn;
+      mat.opacity = 0.035 + Math.sin(time * 7.3) * 0.001 + Math.sin(time * 2.1) * 0.0015;
+    },
   };
 }

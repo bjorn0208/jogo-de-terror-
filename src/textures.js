@@ -383,6 +383,23 @@ export function glowTexture(size = 128) {
   return toTexture(c, { srgb: true });
 }
 
+export function beamTexture(size = 128) {
+  const c = makeCanvas(size), ctx = c.getContext('2d');
+  // brilhante na boca da lanterna, desaparecendo antes do fim do alcance
+  const g = ctx.createLinearGradient(0, 0, 0, size);
+  g.addColorStop(0, 'rgba(255,248,215,0.72)');
+  g.addColorStop(0.18, 'rgba(245,248,215,0.32)');
+  g.addColorStop(0.6, 'rgba(220,232,200,0.07)');
+  g.addColorStop(1, 'rgba(200,220,190,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
+  const r = rng(3);
+  for (let i = 0; i < 36; i++) {
+    ctx.fillStyle = `rgba(0,0,0,${r() * 0.08})`;
+    ctx.fillRect(r() * size, r() * size, 1 + r() * 2, 2 + r() * 10);
+  }
+  return toTexture(c, { srgb: true });
+}
+
 /** "Cookie" da lanterna: hotspot macio e reflector sujo, projetado na cena. */
 export function spotCookie(size = 128) {
   const c = makeCanvas(size), ctx = c.getContext('2d');
@@ -391,9 +408,9 @@ export function spotCookie(size = 128) {
     size / 2, size / 2, size * 0.5
   );
   g.addColorStop(0, 'rgb(255,255,255)');
-  g.addColorStop(0.32, 'rgb(246,246,246)');
-  g.addColorStop(0.68, 'rgb(176,176,176)');
-  g.addColorStop(1, 'rgb(24,24,24)');
+  g.addColorStop(0.35, 'rgb(252,252,252)');
+  g.addColorStop(0.72, 'rgb(214,214,214)');
+  g.addColorStop(1, 'rgb(90,90,90)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
 
   // manchas fracas no vidro/reflector — quebram o círculo perfeito
@@ -423,6 +440,7 @@ export function buildTextures(small = false) {
     cobweb: cobweb(),
     stain: stainTexture(),
     glow: glowTexture(),
+    beam: beamTexture(small ? 64 : 128),
     cookie: spotCookie(small ? 64 : 128),
   };
 }

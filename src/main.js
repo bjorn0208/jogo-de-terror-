@@ -26,7 +26,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = 1.08;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
@@ -38,12 +38,12 @@ const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerH
 camera.rotation.order = 'YXZ';
 scene.add(camera);
 
-// Praticamente nada de luz ambiente: a lanterna manda na cena.
-scene.add(new THREE.AmbientLight(0x273329, 0.055));
-scene.add(new THREE.HemisphereLight(0x182019, 0x070906, 0.04));
+// Um mínimo de bounce para o preto não virar buraco; a lanterna continua mandando.
+scene.add(new THREE.AmbientLight(0x273329, 0.075));
+scene.add(new THREE.HemisphereLight(0x182019, 0x070906, 0.05));
 
-// Com queda física (decay=2) e cookie, 13 mantém o hotspot sem queimar as bordas.
-const FLASH_INTENSITY = 13;
+// Queda física (decay=2) + cookie: 24 dá um hotspot presente sem estourar as bordas.
+const FLASH_INTENSITY = 24;
 
 const controls = new Controls(camera, canvas, []);
 const audio = new HorrorAudio();
@@ -61,7 +61,7 @@ function renderFrame(time) {
   else renderer.render(scene, camera);
 }
 
-let room, atmosphere, monster, flash, flashTarget, pointLight, torch, lens, glow;
+let room, atmosphere, monster, flash, spill, flashTarget, pointLight, torch, lens, glow;
 const viewDir = new THREE.Vector3();
 let started = false, paused = false, flashOn = true, elapsed = 0;
 let flickerUntil = -1, lastHint = -99, hintTimer = 0;
@@ -105,17 +105,17 @@ function createTorch(tex) {
 }
 
 function setupFlashlight(tex) {
-  // decayer=2 e cookie: ilumina como uma lanterna de verdade, não um holofote.
-  flash = new THREE.SpotLight(0xffe8c8, FLASH_INTENSITY, 16, 0.42, 0.75, 2);
+  // Facho principal: hotspot definido, queda física e reflector sujo.
+  flash = new THREE.SpotLight(0xffe6bd, FLASH_INTENSITY, 18, 0.42, 0.6, 2);
   flash.map = tex.cookie;
   flash.position.set(0.1, -0.1, -0.08);
   flash.castShadow = true;
   flash.shadow.mapSize.set(lowEnd ? 512 : 1024, lowEnd ? 512 : 1024);
   flash.shadow.camera.near = 0.06;
-  flash.shadow.camera.far = 16;
+  flash.shadow.camera.far = 18;
   flash.shadow.bias = -0.00025;
   flash.shadow.normalBias = 0.018;
-  flash.shadow.radius = 3;
+  flash.shadow.radius = 2;
   camera.add(flash);
 
   flashTarget = new THREE.Object3D();
@@ -123,8 +123,15 @@ function setupFlashlight(tex) {
   camera.add(flashTarget);
   flash.target = flashTarget;
 
-  // só um respingo quente na própria lanterna; não acende o cenário.
-  pointLight = new THREE.PointLight(0xffd9a0, 0.12, 0.8, 2);
+  // Spill largo e fraco: a luz que "escorre" do reflector ao redor do hotspot.
+  // Sem sombra, custa quase nada e evita o efeito de buraco preto ao redor.
+  spill = new THREE.SpotLight(0xffe0b4, 4, 9, 0.85, 1, 2);
+  spill.position.copy(flash.position);
+  spill.target = flashTarget;
+  camera.add(spill);
+
+  // respingo quente só na própria lanterna/mão.
+  pointLight = new THREE.PointLight(0xffd9a0, 0.25, 1.0, 2);
   pointLight.position.set(0.34, -0.3, -0.58);
   camera.add(pointLight);
 
@@ -135,6 +142,7 @@ function setupFlashlight(tex) {
 function updateFlashlight(t, bob) {
   const on = flashOn;
   flash.visible = on;
+  spill.visible = on;
   pointLight.visible = on;
   lens.visible = on;
   glow.visible = on;
@@ -146,8 +154,9 @@ function updateFlashlight(t, bob) {
   let intensity = FLASH_INTENSITY * jitter;
   if (t < flickerUntil) intensity *= 0.45 + Math.random() * 0.35;
   flash.intensity = intensity;
-  pointLight.intensity = 0.12 * (intensity / FLASH_INTENSITY);
-  glow.material.opacity = 0.36 * (intensity / FLASH_INTENSITY);
+  spill.intensity = 4 * (intensity / FLASH_INTENSITY);
+  pointLight.intensity = 0.25 * (intensity / FLASH_INTENSITY);
+  glow.material.opacity = 0.45 * (intensity / FLASH_INTENSITY);
 
   // Alvo quase fixo: o sway mexe a lanterna na mão, não a direção do feixe.
   const sx = controls.sway.x, sy = controls.sway.y;
@@ -157,6 +166,7 @@ function updateFlashlight(t, bob) {
 
   // passos fazem o feixe tremer só um pouco
   flash.position.set(0.1 + bob.bobX * 0.15, -0.1 + bob.bobY * 0.1, -0.08);
+  spill.position.copy(flash.position);
 }
 
 /* ---- Interface ------------------------------------------------------ */
