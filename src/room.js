@@ -149,8 +149,18 @@ export function createRoom(scene, tex) {
     const top = Math.max(0.02, upperY * t0);
     box(darkWoodMat, stairX1 - stairX0 - 0.06, top, zFront - zBack,
       (stairX0 + stairX1) / 2, top / 2, (zFront + zBack) / 2, { cast: false });
-    box(blackMetal, stairX1 - stairX0 - 0.06, 0.04, 0.035,
-      (stairX0 + stairX1) / 2, top, zBack + 0.02, { cast: false });
+  }
+  // corrimão encostado na lateral direita, seguindo o rumo dos degraus.
+  // Nada mais atravessa a escada: o caminho fica inteiramente livre.
+  const railX = stairX1 - 0.07;
+  const railLen = Math.hypot(stairZ1 - stairZ0, upperY);
+  const railAngle = Math.atan2(upperY, stairZ1 - stairZ0);
+  box(blackMetal, 0.055, 0.055, railLen, railX, upperY / 2 + 0.9,
+    (stairZ0 + stairZ1) / 2, { rotX: railAngle, cast: false });
+  for (let i = 0; i <= steps; i += 3) {
+    const t = i / steps;
+    box(blackMetal, 0.04, 0.9, 0.04, railX, upperY * t + 0.45,
+      stairZ1 - t * (stairZ1 - stairZ0), { cast: false });
   }
   // paredes laterais do poço da escada (só até o piso de cima)
   box(wallMat, 0.08, upperY, stairZ1 - stairZ0, stairX0, upperY / 2, (stairZ0 + stairZ1) / 2,
@@ -167,18 +177,15 @@ export function createRoom(scene, tex) {
   box(wallMat, w, uh, wall, 0, uy + uh / 2, hd, { collide: true, minY: uy, maxY: uy + uh });
   box(wallMat, w, uh, wall, 0, uy + uh / 2, -hd, { collide: true, minY: uy, maxY: uy + uh });
 
-  // divisão corredor/quarto, com vão de porta em z = -1.4 .. -0.3
-  const px = -0.7, doorZ0 = -1.4, doorZ1 = -0.3;
-  box(wallMat, wall, uh, doorZ0 + hd, px, uy + uh / 2, (-hd + doorZ0) / 2,
+  // divisão corredor/quarto: vão livre, sem porta nem batente.
+  // A única porta da casa é a de saída, lá embaixo.
+  const px = -0.7, passZ0 = -1.4, passZ1 = -0.3;
+  box(wallMat, wall, uh, passZ0 + hd, px, uy + uh / 2, (-hd + passZ0) / 2,
     { collide: true, minY: uy, maxY: uy + uh });
-  box(wallMat, wall, uh, 1.2 - doorZ1, px, uy + uh / 2, (doorZ1 + 1.2) / 2,
+  box(wallMat, wall, uh, 1.2 - passZ1, px, uy + uh / 2, (passZ1 + 1.2) / 2,
     { collide: true, minY: uy, maxY: uy + uh });
-  box(wallMat, wall, uh - 2.0, doorZ1 - doorZ0, px, uy + 2.0 + (uh - 2.0) / 2, (doorZ0 + doorZ1) / 2,
+  box(wallMat, wall, uh - 2.0, passZ1 - passZ0, px, uy + 2.0 + (uh - 2.0) / 2, (passZ0 + passZ1) / 2,
     { collide: true, minY: uy + 2.0, maxY: uy + uh });
-  // batente e verga
-  box(darkWoodMat, 0.1, 2.0, 0.08, px, uy + 1.0, doorZ0 - 0.04, { cast: false });
-  box(darkWoodMat, 0.1, 2.0, 0.08, px, uy + 1.0, doorZ1 + 0.04, { cast: false });
-  box(darkWoodMat, 0.1, 0.1, doorZ1 - doorZ0, px, uy + 2.02, (doorZ0 + doorZ1) / 2, { cast: false });
 
   // frente do quarto (o corredor segue até a parede da frente)
   box(wallMat, hw - px, uh, wall, (px + hw) / 2, uy + uh / 2, 1.2,
