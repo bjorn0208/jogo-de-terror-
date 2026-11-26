@@ -20,6 +20,15 @@ for (const name of ['death', 'start', 'forest']) {
   }
 }
 
+// Imagem da folha enviada pelo usuário, também embutida como data URI.
+let paperImage = '';
+try {
+  const buf = await readFile(join(root, 'assets/images/paper-note.jpg'));
+  paperImage = 'data:image/jpeg;base64,' + buf.toString('base64');
+} catch (err) {
+  console.warn('Imagem da folha não encontrada; usando papel procedural.');
+}
+
 const options = {
   entryPoints: [join(root, 'src/main.js')],
   outfile: 'bundle.js',
@@ -41,6 +50,7 @@ const options = {
         const html = tpl
           .replace('/*__STYLE__*/', () => css)
           .replace('/*__AUDIO__*/', () => JSON.stringify(audio))
+          .replace('/*__PAPER__*/', () => JSON.stringify(paperImage))
           .replace('/*__BUNDLE__*/', () => safeJs);
         await writeFile(join(root, 'index.html'), html);
         console.log(`index.html gerado (${(html.length / 1024).toFixed(0)} KB)`);

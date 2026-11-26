@@ -237,6 +237,15 @@ function openPaperUI(note) {
     .replace(/\{\{(\d)\}\}/g, '<b class="num">$1</b>')
     .replace(/\{\{n\}\}/g, '<b class="num">' + note.number + '</b>');
   $('paper-text').innerHTML = html;
+  const img = $('paper-img');
+  const src = window.__PORAO_PAPER__ || '';
+  if (src) {
+    img.src = src;
+    img.style.display = '';
+  } else {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+  }
   $('paper').classList.add('visible');
   paperUI = true;
   paused = true;

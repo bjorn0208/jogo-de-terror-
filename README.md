@@ -37,8 +37,9 @@ já avisa, sem monstro.
 
 A **folha única** está pregada na parede da divisão, do lado do quarto (andar
 de cima). Ela traz os quatro códigos destacados entre as palavras, na ordem
-certa. Ao apertar para ler, aparece uma folha de papel suja em primeiro plano na
-sua frente (`Enter`, `Espaço` ou `Esc` para guardar). O **cofre está em cima do
+certa. Ao apertar para ler, aparece a imagem da folha suja em primeiro plano na
+sua frente, com os códigos destacados logo abaixo (`Enter`, `Espaço` ou `Esc`
+para guardar). A imagem vem embutida no `index.html`, sem internet. O **cofre está em cima do
 criado-mudo no quarto** e guarda a chave da porta. Abra-o com `E`/**PEGAR**,
 digite os quatro números na ordem da folha, pegue a chave e desça para usar na
 porta de saída.
