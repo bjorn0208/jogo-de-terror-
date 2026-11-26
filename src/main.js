@@ -31,7 +31,8 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x040604);
-scene.fog = new THREE.FogExp2(0x0a0f0c, 0.043);
+// Névoa em 10% do valor original: o ar ainda existe, mas não engole o feixe.
+scene.fog = new THREE.FogExp2(0x0a0f0c, 0.0043);
 
 const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.05, 45);
 camera.rotation.order = 'YXZ';
@@ -41,7 +42,8 @@ scene.add(camera);
 scene.add(new THREE.AmbientLight(0x273329, 0.055));
 scene.add(new THREE.HemisphereLight(0x182019, 0x070906, 0.04));
 
-const FLASH_INTENSITY = 11;
+// Com queda física (decay=2) e cookie, 13 mantém o hotspot sem queimar as bordas.
+const FLASH_INTENSITY = 13;
 
 const controls = new Controls(camera, canvas, []);
 const audio = new HorrorAudio();
@@ -82,8 +84,10 @@ function createTorch(tex) {
     ring.position.z = z; g.add(ring);
   }
   lens = new THREE.Mesh(
-    new THREE.CircleGeometry(0.048, 24),
-    new THREE.MeshBasicMaterial({ color: 0xffe2a6, fog: false })
+    new THREE.CircleGeometry(0.05, 24),
+    new THREE.MeshBasicMaterial({
+      map: tex.glow, color: 0xffe6b8, transparent: true, opacity: 0.85, fog: false,
+    })
   );
   lens.position.z = -0.192; g.add(lens);
 
@@ -101,24 +105,27 @@ function createTorch(tex) {
 }
 
 function setupFlashlight(tex) {
-  flash = new THREE.SpotLight(0xffe4b2, FLASH_INTENSITY, 16, 0.4, 0.68, 1.8);
-  flash.position.set(0.1, -0.1, -0.06);
+  // decayer=2 e cookie: ilumina como uma lanterna de verdade, não um holofote.
+  flash = new THREE.SpotLight(0xffe8c8, FLASH_INTENSITY, 16, 0.42, 0.75, 2);
+  flash.map = tex.cookie;
+  flash.position.set(0.1, -0.1, -0.08);
   flash.castShadow = true;
   flash.shadow.mapSize.set(lowEnd ? 512 : 1024, lowEnd ? 512 : 1024);
   flash.shadow.camera.near = 0.06;
-  flash.shadow.camera.far = 22;
-  flash.shadow.bias = -0.00035;
-  flash.shadow.normalBias = 0.022;
-  flash.shadow.radius = 2;
+  flash.shadow.camera.far = 16;
+  flash.shadow.bias = -0.00025;
+  flash.shadow.normalBias = 0.018;
+  flash.shadow.radius = 3;
   camera.add(flash);
 
   flashTarget = new THREE.Object3D();
-  flashTarget.position.set(0, 0, -8);
+  flashTarget.position.set(0, -0.02, -8);
   camera.add(flashTarget);
   flash.target = flashTarget;
 
-  pointLight = new THREE.PointLight(0xffd9a0, 0.65, 1.5, 2);
-  pointLight.position.set(0.3, -0.27, -0.62);
+  // só um respingo quente na própria lanterna; não acende o cenário.
+  pointLight = new THREE.PointLight(0xffd9a0, 0.12, 0.8, 2);
+  pointLight.position.set(0.34, -0.3, -0.58);
   camera.add(pointLight);
 
   torch = createTorch(tex);
@@ -133,14 +140,14 @@ function updateFlashlight(t, bob) {
   glow.visible = on;
   if (!on) return;
 
-  // contato frouxo: apagões curtos e involuntários
-  if (t > flickerUntil + 1.2 && Math.random() < 0.0011) flickerUntil = t + 0.06 + Math.random() * 0.14;
-  const jitter = 1 + Math.sin(t * 17.3) * 0.007 + Math.sin(t * 31.7) * 0.004;
+  // contato frouxo: quedas curtas, nunca um apagão preto
+  if (t > flickerUntil + 1.2 && Math.random() < 0.0008) flickerUntil = t + 0.06 + Math.random() * 0.14;
+  const jitter = 1 + Math.sin(t * 17.3) * 0.005 + Math.sin(t * 31.7) * 0.003;
   let intensity = FLASH_INTENSITY * jitter;
-  if (t < flickerUntil) intensity *= 0.25 + Math.random() * 0.5;
+  if (t < flickerUntil) intensity *= 0.45 + Math.random() * 0.35;
   flash.intensity = intensity;
   pointLight.intensity = 0.12 * (intensity / FLASH_INTENSITY);
-  glow.material.opacity = 0.38 * (intensity / FLASH_INTENSITY);
+  glow.material.opacity = 0.36 * (intensity / FLASH_INTENSITY);
 
   // Alvo quase fixo: o sway mexe a lanterna na mão, não a direção do feixe.
   const sx = controls.sway.x, sy = controls.sway.y;
@@ -149,7 +156,7 @@ function updateFlashlight(t, bob) {
   torch.rotation.set(0.05 + sy * 0.3, -0.06 + sx * 0.3, 0.05);
 
   // passos fazem o feixe tremer só um pouco
-  flash.position.set(0.1 + bob.bobX * 0.15, -0.1 + bob.bobY * 0.1, -0.06);
+  flash.position.set(0.1 + bob.bobX * 0.15, -0.1 + bob.bobY * 0.1, -0.08);
 }
 
 /* ---- Interface ------------------------------------------------------ */

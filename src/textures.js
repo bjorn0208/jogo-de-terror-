@@ -409,6 +409,34 @@ export function beamTexture(size = 128) {
   return toTexture(c, { srgb: true });
 }
 
+/** "Cookie" da lanterna: hotspot macio e reflector sujo, projetado na cena. */
+export function spotCookie(size = 128) {
+  const c = makeCanvas(size), ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(
+    size / 2, size / 2, size * 0.035,
+    size / 2, size / 2, size * 0.5
+  );
+  g.addColorStop(0, 'rgb(255,255,255)');
+  g.addColorStop(0.32, 'rgb(246,246,246)');
+  g.addColorStop(0.68, 'rgb(176,176,176)');
+  g.addColorStop(1, 'rgb(24,24,24)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, size, size);
+
+  // manchas fracas no vidro/reflector — quebram o círculo perfeito
+  const r = rng(913);
+  for (let i = 0; i < 22; i++) {
+    const x = size * (0.2 + r() * 0.6), y = size * (0.2 + r() * 0.6);
+    const rad = size * (0.04 + r() * 0.09);
+    const smudge = ctx.createRadialGradient(x, y, 0, x, y, rad);
+    smudge.addColorStop(0, `rgba(0,0,0,${0.04 + r() * 0.09})`);
+    smudge.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = smudge; ctx.fillRect(0, 0, size, size);
+  }
+  const t = toTexture(c, { aniso: 1 });
+  t.flipY = false;
+  return t;
+}
+
 /** small=true no celular: metade da resolução, cache de textura bem mais leve. */
 export function buildTextures(small = false) {
   const s = small ? 256 : 512;
@@ -423,5 +451,6 @@ export function buildTextures(small = false) {
     glow: glowTexture(),
     dust: dustSprite(),
     beam: beamTexture(),
+    cookie: spotCookie(small ? 64 : 128),
   };
 }
