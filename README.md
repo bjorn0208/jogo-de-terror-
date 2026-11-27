@@ -84,7 +84,10 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   quarto é
   aberto, sem porta nem batente. O jogador sobe e desce entre **três níveis**
   (porão, andar de cima e sótão) com piso interpolado; as colisões são
-  separadas por andar. Móveis e jogador usam a mesma escala.
+  separadas por andar. A escada só é aceita pela boca certa: chegar de lado no
+  vão (perto da porta da cozinha, por exemplo) não joga o jogador para o andar
+  de cima, e entrar de lado no buraco do andar de cima não derruba você. Móveis
+  e jogador usam a mesma escala.
 - **Texturas 100% procedurais**: cor, normal e rugosidade geradas em canvas
   (umidade, rachaduras, ferrugem, veios de madeira, cascalho). Nenhum asset
   externo é baixado.

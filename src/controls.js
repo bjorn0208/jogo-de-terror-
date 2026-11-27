@@ -30,6 +30,7 @@ export class Controls {
     this.ramps = [];
     this.floorY = 0;
     this.level = 0; // 0 = porão, 1 = andar de cima, 2 = sótão
+    this.activeRamp = -1; // escada em uso: impede entrar pelo meio do vão
 
     this._onMouse = (e) => {
       if (!this.enabled) return;
@@ -115,6 +116,7 @@ export class Controls {
   reset(spawn) {
     this.floorY = spawn.y || 0;
     this.level = this.floorY > 4.5 ? 2 : this.floorY > 1 ? 1 : 0;
+    this.activeRamp = -1;
     this.baseEye = this.floorY + this.eyeHeight;
     this.camera.position.set(spawn.x, this.baseEye, spawn.z);
     this.touchMove.x = this.touchMove.y = 0;
@@ -135,18 +137,37 @@ export class Controls {
     return false;
   }
 
-  /** Altura do piso sob (x,z). O nível fica "grudado" até a escada terminar. */
+  /** Altura do piso sob (x,z). A escada só é aceita pela boca certa: entrar
+   *  de lado no vão não pode jogar o jogador para outro andar. */
   sampleFloor(x, z) {
-    for (const r of this.ramps) {
-      if (x >= r.minX && x <= r.maxX && z >= r.zMin && z <= r.zMax) {
-        const t = Math.max(0, Math.min(1, (r.zMax - z) / (r.zMax - r.zMin)));
-        // degraus: piso sobe de vez em quando, não como rampa lisa
-        const f = r.steps ? Math.min(r.steps, Math.floor(t * r.steps)) / r.steps : t;
-        // troca de nível no meio da escada: o próximo passo já sai da rampa
-        const from = r.fromLevel ?? 0, to = r.toLevel ?? from + 1;
-        this.level = f >= 0.5 ? to : from;
-        return r.yBottom + (r.yTop - r.yBottom) * f;
-      }
+    const inside = (r) => x >= r.minX && x <= r.maxX && z >= r.zMin && z <= r.zMax;
+    const rampT = (r) => Math.max(0, Math.min(1, (r.zMax - z) / (r.zMax - r.zMin)));
+    const rampY = (r, t) => {
+      // degraus: piso sobe de vez em quando, não como rampa lisa
+      const f = r.steps ? Math.min(r.steps, Math.floor(t * r.steps)) / r.steps : t;
+      // troca de nível no meio da escada: o próximo passo já sai da rampa
+      const from = r.fromLevel ?? 0, to = r.toLevel ?? from + 1;
+      this.level = f >= 0.5 ? to : from;
+      return r.yBottom + (r.yTop - r.yBottom) * f;
+    };
+
+    // Quem já está numa escada continua nela até sair do vão, mesmo depois da
+    // troca de nível no meio dos degraus.
+    if (this.activeRamp >= 0) {
+      const r = this.ramps[this.activeRamp];
+      if (r && inside(r)) return rampY(r, rampT(r));
+      this.activeRamp = -1;
+    }
+
+    for (let i = 0; i < this.ramps.length; i++) {
+      const r = this.ramps[i];
+      if (!inside(r)) continue;
+      const from = r.fromLevel ?? 0, to = r.toLevel ?? from + 1;
+      const t = rampT(r);
+      // Só entra pela boca de baixo (subindo) ou pelo topo (descendo).
+      if (!((this.level === from && t <= 0.08) || (this.level === to && t >= 0.92))) continue;
+      this.activeRamp = i;
+      return rampY(r, t);
     }
     if (this.level > 0) {
       for (const zone of this.zones) {

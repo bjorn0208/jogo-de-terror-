@@ -128,6 +128,18 @@ export function createRoom(scene, tex) {
   const atticH = 2.2;
   const steps = 30;
 
+  // Barreiras invisíveis nas laterais dos vãos, apenas nos andares altos.
+  // Não são madeiras visíveis na escada: só impedem entrar de lado no buraco.
+  const guardTop = atticY + atticH;
+  const g1z0 = stairZ0 + 0.35, g1z1 = stairZ1 - 0.55;
+  for (const gx of [stairX0, stairX1]) {
+    addCollider(gx, (g1z0 + g1z1) / 2, 0.1, g1z1 - g1z0, 0, upperY, guardTop);
+  }
+  const g2z0 = atticZ0 + 0.35, g2z1 = atticZ1 - 0.55;
+  for (const gx of [atticX0, atticX1]) {
+    addCollider(gx, (g2z0 + g2z1) / 2, 0.1, g2z1 - g2z0, 0, upperY, guardTop);
+  }
+
   slab(floorMat, -hw, hw, -hd, hd, 0, true);
 
   // Dois vãos: a escada do porão e a escada do sótão. As lajes são recortadas
