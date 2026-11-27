@@ -149,10 +149,10 @@ export function createItems(scene) {
   safe.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   group.add(safe);
 
-  // Única pilha do jogo: em cima do guarda-roupa do segundo quarto.
-  // O topo do móvel fica em y = 3 + 1,8 = 4,8; a caixa assenta logo acima.
+  // Única pilha do jogo: no fundo do sótão, sobre o caixote encostado à
+  // parede de trás. O topo do caixote fica em y = 6 + 0,56 = 6,56.
   const batteries = [
-    battery(-6.05, 0.45, 4.84, -0.35),
+    battery(-5.6, -3.0, 6.6, -0.35),
   ];
 
   // a chave fica dentro do cofre até ele ser aberto

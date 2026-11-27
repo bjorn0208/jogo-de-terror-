@@ -50,8 +50,12 @@ export function createRoom(scene, tex) {
   const burntMat = new THREE.MeshStandardMaterial({ ...tex.metal, color: 0x191c18, roughness: 1, metalness: 0.35 });
   const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2924, roughness: 1 });
   const bagMat = new THREE.MeshStandardMaterial({
-    color: 0xb8b9ad, roughness: 0.42, metalness: 0.05,
-    transparent: true, opacity: 0.52, depthWrite: false, side: THREE.DoubleSide,
+    color: 0x080a09, roughness: 0.24, metalness: 0.12,
+    transparent: true, opacity: 0.96, side: THREE.DoubleSide,
+  });
+  const bagWetMat = new THREE.MeshStandardMaterial({
+    color: 0x101713, roughness: 0.12, metalness: 0.2,
+    transparent: true, opacity: 0.7, depthWrite: false, side: THREE.DoubleSide,
   });
   const flyBodyMat = new THREE.MeshStandardMaterial({ color: 0x0b0d0b, roughness: 0.75 });
   const flyWingMat = new THREE.MeshStandardMaterial({
@@ -141,7 +145,7 @@ export function createRoom(scene, tex) {
   const hw = w / 2, hd = d / 2;
 
   // vão da escada: o teto do porão é o piso do andar de cima
-  const stairX0 = -3.85, stairX1 = -2.65;
+  const stairX0 = -3.6, stairX1 = -2.4;
   const stairZ0 = -1.75, stairZ1 = 2.85;
   const upperY = h;
 
@@ -156,8 +160,10 @@ export function createRoom(scene, tex) {
   // Não são madeiras visíveis na escada: só impedem entrar de lado no buraco.
   const guardTop = atticY + atticH;
   const g1z0 = stairZ0 + 0.35, g1z1 = stairZ1 - 0.55;
+  // O vão da primeira escada existe só no andar de cima: no sótão há laje
+  // firme sobre ele, então a barreira não pode atravessar o piso do sótão.
   for (const gx of [stairX0, stairX1]) {
-    addCollider(gx, (g1z0 + g1z1) / 2, 0.1, g1z1 - g1z0, 0, upperY, guardTop);
+    addCollider(gx, (g1z0 + g1z1) / 2, 0.1, g1z1 - g1z0, 0, upperY, upperY + h);
   }
   const g2z0 = atticZ0 + 0.35, g2z1 = atticZ1 - 0.55;
   for (const gx of [atticX0, atticX1]) {
@@ -242,27 +248,14 @@ export function createRoom(scene, tex) {
   box(darkWoodMat, 0.05, 0.14, d, hw - 0.14, 0.07, 0, { cast: false });
 
   /* ---- Cozinha no porão (ala esquerda) ------------------------------- */
-  // Vão amplo na frente, junto da boca da escada. A cozinha aparece assim que
-  // o jogador entra, em vez de ficar escondida atrás do topo da escada.
-  const kitX = -4.2, kitDoorZ0 = 2.05, kitDoorZ1 = 3.15;
+  // Mais larga, com uma entrada maior: a divisória recuou para a direita e a
+  // escada acompanhou. O vão fica livre — sem batentes ou decalques flutuando
+  // no meio da passagem, que era o que causava o clarão sob a lanterna.
+  const kitX = -3.9, kitDoorZ0 = 1.8, kitDoorZ1 = 3.3;
   box(wallMat, wall, h, kitDoorZ0 + hd, kitX, h / 2, (-hd + kitDoorZ0) / 2, { collide: true });
   box(wallMat, wall, h, hd - kitDoorZ1, kitX, h / 2, (kitDoorZ1 + hd) / 2, { collide: true });
   box(wallMat, wall, h - 2.0, kitDoorZ1 - kitDoorZ0, kitX, 2.0 + (h - 2.0) / 2,
     (kitDoorZ0 + kitDoorZ1) / 2, { collide: true, minY: 2.0, maxY: h });
-  // Azulejos fuliginados nos dois lados do vão; não há folha de porta.
-  for (const side of [-1, 1]) {
-    decal(sootMat, kitDoorZ1 - kitDoorZ0, 2.05,
-      kitX + side * (wall / 2 + 0.012), 1.03, (kitDoorZ0 + kitDoorZ1) / 2,
-      0, side * Math.PI / 2, 0);
-    decal(rustMat, 0.16, 2.0,
-      kitX + side * (wall / 2 + 0.018), 1.0, kitDoorZ0 + 0.06,
-      0, side * Math.PI / 2, 0);
-  }
-  for (const zz of [kitDoorZ0 + 0.04, kitDoorZ1 - 0.04]) {
-    box(burntMat, 0.12, 2.02, 0.07, kitX + 0.09, 1.01, zz, { cast: false });
-  }
-  box(burntMat, 0.12, 0.1, kitDoorZ1 - kitDoorZ0, kitX + 0.09, 2.01,
-    (kitDoorZ0 + kitDoorZ1) / 2, { cast: false });
 
   /* ---- Bancada, pia, fogão, armário e geladeira queimados ------------- */
   box(darkWoodMat, 0.6, 0.85, 2.4, -6.15, 0.43, 0.9, { collide: true, maxY: 0.9 });
@@ -431,15 +424,16 @@ export function createRoom(scene, tex) {
   box(cardboard, 1.1, 0.2, 1.8, -5.5, uy + 0.36, -2.4);
   box(cardboardDark, 0.62, 0.1, 0.34, -5.5, uy + 0.5, -3.0);
   decal(sootMat, 0.8, 0.55, -5.5, uy + 0.468, -2.35, -Math.PI / 2, 0, 0.25);
-  // Guarda-roupa alto: a única pilha do jogo fica em cima dele.
-  box(darkWoodMat, 0.85, 1.72, 0.55, -6.05, uy + 0.86, 0.45,
-    { collide: true, minY: uy, maxY: uy + 1.8 });
-  box(woodMat, 0.9, 0.08, 0.6, -6.05, uy + 1.76, 0.45);
-  box(woodMat, 0.04, 1.5, 0.42, -5.61, uy + 0.86, 0.58,
+  // Guarda-roupa baixo e estreito: o quarto continua sem porta, mas o móvel
+  // não serve mais de suporte para a pilha (que foi para o fundo do sótão).
+  box(darkWoodMat, 0.6, 1.25, 0.44, -6.12, uy + 0.625, 0.45,
+    { collide: true, minY: uy, maxY: uy + 1.32 });
+  box(woodMat, 0.65, 0.06, 0.48, -6.12, uy + 1.28, 0.45);
+  box(woodMat, 0.035, 1.06, 0.34, -5.81, uy + 0.62, 0.56,
     { rotY: -0.42, cast: false });
-  box(burntMat, 0.04, 1.5, 0.16, -5.62, uy + 0.86, 0.2, { cast: false });
-  cyl(metalMat, 0.012, 0.16, -5.55, uy + 1.0, 0.63, { axis: 'z', segs: 8 });
-  decal(mildewMat, 0.5, 0.7, -5.6, uy + 1.05, 0.42, 0, Math.PI / 2, 0);
+  box(burntMat, 0.035, 1.06, 0.13, -5.82, uy + 0.62, 0.25, { cast: false });
+  cyl(metalMat, 0.011, 0.12, -5.77, uy + 0.78, 0.6, { axis: 'z', segs: 8 });
+  decal(mildewMat, 0.38, 0.5, -5.8, uy + 0.8, 0.42, 0, Math.PI / 2, 0);
   // mala e caixa virada, para o quarto não ficar vazio
   box(cardboardDark, 0.72, 0.32, 0.42, -6.2, uy + 0.16, 1.15,
     { collide: true, minY: uy, maxY: uy + 0.4, rotY: 0.2 });
@@ -461,10 +455,15 @@ export function createRoom(scene, tex) {
   for (const z of [-2.6, -0.6, 1.4, 3.0]) {
     box(darkWoodMat, w - 0.4, 0.16, 0.14, 0, ay + ah - 0.16, z, { cast: false });
   }
-  for (const [x, z] of [[-5.6, -2.6], [-4.8, -2.2], [6.0, 2.4], [-1.5, 2.2]]) {
+  for (const [x, z] of [[-6.1, -0.6], [-4.3, -2.2], [6.0, 2.4], [-1.5, 2.2]]) {
     box(cardboard, 0.6, 0.5, 0.5, x, ay + 0.25, z,
       { collide: true, minY: ay, maxY: ay + 0.6 });
   }
+  // Caixote no fundo do sótão, encostado na parede de trás: é onde fica a
+  // única pilha do jogo, bem longe da boca da escada.
+  box(darkWoodMat, 0.72, 0.52, 0.58, -5.6, ay + 0.26, -3.0,
+    { collide: true, minY: ay, maxY: ay + 0.58 });
+  box(woodMat, 0.76, 0.04, 0.62, -5.6, ay + 0.54, -3.0);
 
   // Peças soltas: cada móvel é montado torto, com partes arrancadas.
   function piece(g, mat, pw, ph, pd, x, y, z, rx = 0, ry = 0, rz = 0) {
@@ -508,8 +507,8 @@ export function createRoom(scene, tex) {
   brokenTable(-0.4, 1.2, 0.35);
   brokenWardrobe(-3.6, 1.5, -0.45);
 
-  // Corpos enrolados em sacos plásticos: o plástico semi-transparente deixa
-  // entrever as roupas escuras e os nós nas duas pontas.
+  // Corpos embrulhados em sacos pretos: o plástico quase opaco tem brilho
+  // úmido, dobras apertadas, nós nas duas pontas e membros marcados por baixo.
   const bodySpots = [
     [-2.7, -1.9, 0.35, 1],
     [1.7, 2.1, -0.55, 0.94],
@@ -517,28 +516,49 @@ export function createRoom(scene, tex) {
   ];
   function baggedBody(x, z, yaw, s) {
     const g = new THREE.Group();
-    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.0, 14), bodyMat);
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.21, 1.0, 14), bodyMat);
     torso.rotation.x = Math.PI / 2; g.add(torso);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 10), bodyMat);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 14, 10), bodyMat);
     head.position.z = -0.62; g.add(head);
     for (const [lx, lz] of [[-0.2, 0.22], [0.2, 0.22], [-0.14, -0.28], [0.14, -0.28]]) {
       const limb = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.055, 0.62, 10), bodyMat);
       limb.position.set(lx, -0.02, lz); limb.rotation.x = Math.PI / 2;
       limb.rotation.z = lx * 0.5; g.add(limb);
     }
-    const bag = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.26, 1.18, 16), bagMat);
+    // Saco preto: barriga larga, cabeça fechada e um rabo torcido na ponta.
+    const bag = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.3, 1.2, 18), bagMat);
     bag.rotation.x = Math.PI / 2; g.add(bag);
-    const bagHead = new THREE.Mesh(new THREE.SphereGeometry(0.23, 14, 10), bagMat);
-    bagHead.position.z = -0.62; g.add(bagHead);
-    for (const zz of [-0.62, 0.6]) {
-      const knot = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.022, 6, 14), blackMetal);
-      knot.position.z = zz; g.add(knot);
+    const bagHead = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), bagMat);
+    bagHead.position.z = -0.63; g.add(bagHead);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.18, 12), bagMat);
+    neck.rotation.x = Math.PI / 2; neck.position.z = -0.44; g.add(neck);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.28, 10), bagMat);
+    tail.rotation.x = -Math.PI / 2; tail.position.z = -0.86; g.add(tail);
+    // Braços e pernas ficam visíveis como volumes sob o plástico.
+    for (const [lx, lz, rr] of [[-0.2, 0.3, 0.09], [0.2, 0.3, 0.09], [-0.14, -0.28, 0.1], [0.14, -0.28, 0.1]]) {
+      const bulge = new THREE.Mesh(new THREE.SphereGeometry(rr, 10, 8), bagMat);
+      bulge.scale.set(1, 0.8, 1.9);
+      bulge.position.set(lx, 0.02, lz); g.add(bulge);
     }
-    for (let i = 0; i < 4; i++) {
-      const fold = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.012, 0.1), bagMat);
-      fold.position.set((r() - 0.5) * 0.1, 0.16 + r() * 0.08, -0.4 + i * 0.27);
-      fold.rotation.set((r() - 0.5) * 0.3, r() * 0.5, (r() - 0.5) * 0.4);
+    for (const zz of [-0.78, 0.62]) {
+      const knot = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.025, 6, 14), blackMetal);
+      knot.position.z = zz; g.add(knot);
+      const tie = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.018, 6, 12), blackMetal);
+      tie.position.z = zz + (zz < 0 ? -0.06 : 0.06); g.add(tie);
+    }
+    // Dobras tortas e manchas úmidas: o saco parece enrolado às pressas.
+    for (let i = 0; i < 9; i++) {
+      const fold = new THREE.Mesh(new THREE.BoxGeometry(0.44 + r() * 0.16, 0.012, 0.07 + r() * 0.08), bagMat);
+      fold.position.set((r() - 0.5) * 0.12, 0.2 + r() * 0.1, -0.45 + i * 0.12);
+      fold.rotation.set((r() - 0.5) * 0.3, r() * 0.7, (r() - 0.5) * 0.5);
       g.add(fold);
+    }
+    for (const [wx, wz, ww, wd] of [[-0.1, -0.2, 0.2, 0.34], [0.12, 0.25, 0.16, 0.26], [0, 0.5, 0.13, 0.2]]) {
+      const wet = new THREE.Mesh(new THREE.PlaneGeometry(ww, wd), bagWetMat);
+      wet.rotation.x = -Math.PI / 2;
+      wet.position.set(wx, 0.28, wz);
+      wet.rotation.z = r() * 0.6;
+      g.add(wet);
     }
     g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
     g.position.set(x, ay + 0.29 * s, z); g.rotation.y = yaw; g.scale.setScalar(s);

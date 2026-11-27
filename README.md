@@ -31,8 +31,8 @@ muda de texto conforme o objeto próximo (pegar pilha, ler folha, abrir cofre,
 usar chave).
 
 **Objetivo:** cada pilha dura 2 minutos. Com 10 segundos restantes a luz começa
-a piscar. Há **uma única pilha no jogo**, em cima do guarda-roupa do segundo
-quarto (ala esquerda do andar de cima, sem porta). Ela vem numa caixa verde com
+a piscar. Há **uma única pilha no jogo**, no fundo do sótão, sobre um caixote
+encostado à parede de trás. Ela vem numa caixa verde com
 duas pilhas AA dentro. Se a luz morrer, um vídeo ocupa a tela; quando ele
 termina, toca o som da morte e aparece a tela final. Sem monstro.
 
@@ -68,19 +68,22 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   de altura. O porão mantém a janela gradeada e a **porta de saída trancada**
   (caminho livre de caixas), além de canos, caldeira, prateleiras, bancada,
   cadeira tombada, entulho, poças, manchas e teias.
-- **Cozinha logo na entrada, à esquerda**: o vão amplo fica na frente, junto da
-  boca da escada, e não mais escondido atrás do topo dela. Tem **fogão
-  queimado** com bocas tortas e exaustor derretido, **geladeira enferrujada**,
-  **armário com a porta carbonizada**, bancada suja, pia com água parada e mesa
-  com restos de comida. Dentro, o **banheiro** tem mofo, ferrugem, água suja no
-  sanitário e pano de chuveiro infectado.
+- **Cozinha maior logo na entrada, à esquerda**: a divisória recuou e a escada
+  acompanhou, deixando o vão mais largo na frente, junto da boca da escada. A
+  entrada não tem batente, folha ou decalque flutuando no meio — nada que
+  provoque clarão quando a lanterna passa. Tem **fogão queimado** com bocas
+  tortas e exaustor derretido, **geladeira enferrujada**, **armário com a porta
+  carbonizada**, bancada suja, pia com água parada e mesa com restos de comida.
+  Dentro, o **banheiro** tem mofo, ferrugem, água suja no sanitário e pano de
+  chuveiro infectado.
 - **Segundo quarto no andar de cima**, na ala esquerda: **sem porta, batente ou
-  folha**, com cama estreita, mala, móveis velhos e um **guarda-roupa alto onde
-  fica a única pilha do jogo**. A altura também entra na interação: não dá para
-  pegar o que está no andar de cima atravessando o piso.
+  folha**, com cama estreita, mala, móveis velhos e um **guarda-roupa baixo e
+  estreito**. A altura também entra na interação: não dá para pegar o que está
+  em outro andar atravessando o piso.
 - **Sótão com móveis quebrados** (cadeiras, mesa e armário desmontados),
-  **três corpos enrolados em sacos plásticos** com manchas escuras embaixo e
-  **moscas** que voam em círculos e vibram as asas.
+  **três corpos em sacos pretos** com brilho úmido, dobras, nós e membros
+  marcados, manchas escuras embaixo e **moscas** que voam em círculos e vibram
+  as asas. A **única pilha** fica sobre um caixote no fundo do sótão.
 - **Escada do sótão** no canto direito do quarto: 30 degraus abertos, mesma
   rampa sólida da primeira escada, sem corrimão ou madeiras laterais. O piso
   tem dois vãos recortados para as escadas passarem.

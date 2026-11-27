@@ -412,8 +412,8 @@ function findInteractable() {
   if (!items || !started || finished || safeUI || paperUI) return null;
   const p = camera.position;
   let best = null, bestD = Infinity;
-  // A distância é plana, mas a altura também conta: a pilha sobre o armário
-  // do segundo quarto não pode ser pega de baixo, atravessando o piso.
+  // A distância é plana, mas a altura também conta: a pilha no fundo do sótão
+  // não pode ser pega de baixo, atravessando o piso.
   const consider = (type, obj, label, range, maxDy = 1.6 * SCALE) => {
     const d = Math.hypot(p.x - obj.position.x, p.z - obj.position.z);
     if (Math.abs(p.y - obj.position.y) > maxDy) return;
@@ -609,7 +609,7 @@ function maybeHint() {
   const p = camera.position;
   if (elapsed - lastHint < 8) return;
   if (controls.floorY > 5.5 * SCALE) {
-    showPhrase('attic', 'O sótão. Móveis quebrados, sacos plásticos e moscas.', 4);
+    showPhrase('attic', 'O sótão. Móveis quebrados, sacos pretos e moscas.', 4);
     lastHint = elapsed;
     return;
   }
