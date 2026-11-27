@@ -10,7 +10,7 @@ import { rng } from './textures.js';
 // A casa é montada em coordenadas BASE e escalada por SCALE.
 // Tamanho normal: o jogador (1,62 m) e os móveis estão na mesma escala.
 export const SCALE = 1;
-const BASE = { w: 8.4, d: 7.2, h: 3.0, wall: 0.22 };
+const BASE = { w: 13.2, d: 7.2, h: 3.0, wall: 0.22 };
 export const ROOM = {
   w: BASE.w * SCALE,
   d: BASE.d * SCALE,
@@ -42,6 +42,7 @@ export function createRoom(scene, tex) {
   const webMat = new THREE.MeshBasicMaterial({ map: tex.cobweb, color: 0x9aa08f, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide });
   const stainMat = new THREE.MeshStandardMaterial({ map: tex.stain, transparent: true, opacity: 0.85, depthWrite: false, roughness: 1, color: 0x6d725f, side: THREE.DoubleSide });
   const bloodMat = new THREE.MeshStandardMaterial({ map: tex.stain, transparent: true, opacity: 0.9, depthWrite: false, roughness: 1, color: 0x651a14, side: THREE.DoubleSide });
+  const ceramic = new THREE.MeshStandardMaterial({ color: 0xb9b9ad, roughness: 0.5 });
 
   function register(mesh, cast = true, receive = true) {
     mesh.castShadow = cast; mesh.receiveShadow = receive;
@@ -94,6 +95,23 @@ export function createRoom(scene, tex) {
     return m;
   }
 
+  /** Escada aberta: rampa sólida e degraus finos, sem espetos na lateral. */
+  function buildStair(x0, x1, z0, z1, yBottom, yTop, n) {
+    const run = z1 - z0, rise = yTop - yBottom;
+    const slope = Math.atan2(rise, run);
+    const rampLen = Math.hypot(run, rise);
+    box(darkWoodMat, x1 - x0 - 0.06, 0.12, rampLen,
+      (x0 + x1) / 2, yBottom + rise / 2 - 0.06, (z0 + z1) / 2,
+      { rotX: slope, cast: false });
+    for (let i = 0; i < n; i++) {
+      const t0 = i / n, t1 = (i + 1) / n;
+      const zFront = z1 - t0 * run, zBack = z1 - t1 * run;
+      const top = yBottom + Math.max(0.06, rise * t1);
+      box(darkWoodMat, x1 - x0 - 0.06, 0.06, zFront - zBack,
+        (x0 + x1) / 2, top - 0.03, (zFront + zBack) / 2, { cast: false });
+    }
+  }
+
   /* ---- Estrutura ---------------------------------------------------- */
   const { w, d, h, wall } = BASE;
   const hw = w / 2, hd = d / 2;
@@ -103,13 +121,25 @@ export function createRoom(scene, tex) {
   const stairZ0 = -1.75, stairZ1 = 2.85;
   const upperY = h;
 
+  // segunda escada: sobe do andar de cima para o sótão
+  const atticX0 = 4.35, atticX1 = 5.55;
+  const atticZ0 = -3.0, atticZ1 = 1.0;
+  const atticY = upperY + h;
+  const atticH = 2.2;
+  const steps = 30;
+
   slab(floorMat, -hw, hw, -hd, hd, 0, true);
 
+  // Dois vãos: a escada do porão e a escada do sótão. As lajes são recortadas
+  // para as duas rampas passarem sem atravessar o piso de cima.
   const slabs = [
     [-hw, stairX0, -hd, hd],
-    [stairX1, hw, -hd, hd],
     [stairX0, stairX1, -hd, stairZ0],
     [stairX0, stairX1, stairZ1, hd],
+    [stairX1, atticX0, -hd, hd],
+    [atticX0, atticX1, -hd, atticZ0],
+    [atticX0, atticX1, atticZ1, hd],
+    [atticX1, hw, -hd, hd],
   ];
   for (const [x0, x1, z0, z1] of slabs) {
     // teto do porão fica logo abaixo da laje, sem planos na mesma altura
@@ -117,7 +147,17 @@ export function createRoom(scene, tex) {
     // piso do andar de cima: laje sólida, sem z-fighting nem falhas
     upperFloor(floorMat, x0, x1, z0, z1, upperY);
   }
-  slab(ceilMat, -hw, hw, -hd, hd, upperY + h, false);
+  // O teto do andar de cima é o piso do sótão, com vão para a segunda escada.
+  const atticSlabs = [
+    [-hw, atticX0, -hd, hd],
+    [atticX1, hw, -hd, hd],
+    [atticX0, atticX1, -hd, atticZ0],
+    [atticX0, atticX1, atticZ1, hd],
+  ];
+  for (const [x0, x1, z0, z1] of atticSlabs) {
+    slab(ceilMat, x0, x1, z0, z1, atticY - 0.12, false);
+    upperFloor(floorMat, x0, x1, z0, z1, atticY);
+  }
 
   // paredes laterais e da frente (a de traz e recortada pela janela)
   box(wallMat, wall, h, d, -hw, h / 2, 0, { collide: true });
@@ -165,26 +205,66 @@ export function createRoom(scene, tex) {
   box(darkWoodMat, 0.05, 0.14, d, -hw + 0.14, 0.07, 0, { cast: false });
   box(darkWoodMat, 0.05, 0.14, d, hw - 0.14, 0.07, 0, { cast: false });
 
-  /* ---- Escada -------------------------------------------------------- */
-  // Uma rampa sólida sustenta 30 degraus finos. Antes cada degrau era uma
-  // coluna até o chão e a lateral virava uma fileira de "espetos".
-  const steps = 30;
-  const run = stairZ1 - stairZ0;
-  const slope = Math.atan2(upperY, run);
-  const rampLen = Math.hypot(run, upperY);
-  box(darkWoodMat, stairX1 - stairX0 - 0.06, 0.12, rampLen,
-    (stairX0 + stairX1) / 2, upperY / 2 - 0.06, (stairZ0 + stairZ1) / 2,
-    { rotX: slope, cast: false });
-  for (let i = 0; i < steps; i++) {
-    const t0 = i / steps, t1 = (i + 1) / steps;
-    const zFront = stairZ1 - t0 * run;
-    const zBack = stairZ1 - t1 * run;
-    const top = Math.max(0.06, upperY * t1);
-    box(darkWoodMat, stairX1 - stairX0 - 0.06, 0.06, zFront - zBack,
-      (stairX0 + stairX1) / 2, top - 0.03, (zFront + zBack) / 2, { cast: false });
+  /* ---- Cozinha no porão (ala esquerda) ------------------------------- */
+  // Divisória com porta aberta para a cozinha. O vão fica atrás do topo da
+  // escada, para não dar no meio dos degraus.
+  const kitX = -4.2, kitDoorZ0 = -3.4, kitDoorZ1 = -2.3;
+  box(wallMat, wall, h, kitDoorZ0 + hd, kitX, h / 2, (-hd + kitDoorZ0) / 2, { collide: true });
+  box(wallMat, wall, h, hd - kitDoorZ1, kitX, h / 2, (kitDoorZ1 + hd) / 2, { collide: true });
+  box(wallMat, wall, h - 2.0, kitDoorZ1 - kitDoorZ0, kitX, 2.0 + (h - 2.0) / 2,
+    (kitDoorZ0 + kitDoorZ1) / 2, { collide: true, minY: 2.0, maxY: h });
+  // Batentes e folha aberta: o vão continua livre para caminhar.
+  for (const zz of [kitDoorZ0 + 0.05, kitDoorZ1 - 0.05]) {
+    box(darkWoodMat, 0.09, 2.05, 0.08, kitX + 0.09, 1.03, zz, { cast: false });
   }
-  // Sem madeiras/corrimão nas laterais: a escada fica aberta, com acabamento
-  // limpo na lateral e o último degrau rente ao piso do andar de cima.
+  box(darkWoodMat, 0.09, 0.1, kitDoorZ1 - kitDoorZ0, kitX + 0.09, 2.02,
+    (kitDoorZ0 + kitDoorZ1) / 2, { cast: false });
+  box(woodMat, 1.05, 2.0, 0.05, kitX - 0.42, 1.0, kitDoorZ0 + 0.12, { rotY: 1.35, cast: false });
+
+  // Bancadas, pia, fogão e geladeira. A bancada começa depois da porta do
+  // banheiro, para deixar a passagem livre.
+  box(darkWoodMat, 0.6, 0.85, 2.4, -6.15, 0.43, 0.9, { collide: true, maxY: 0.9 });
+  box(woodMat, 0.62, 0.05, 2.4, -6.15, 0.87, 0.9);
+  box(metalMat, 0.5, 0.025, 0.48, -6.15, 0.91, 0.2, { cast: false });
+  cyl(metalMat, 0.02, 0.22, -6.15, 1.04, 0.2, { segs: 8 });
+  box(blackMetal, 0.6, 0.05, 0.7, -6.15, 0.91, 1.6);
+  for (const zz of [1.4, 1.8]) box(blackMetal, 0.5, 0.02, 0.02, -6.15, 0.96, zz, { cast: false });
+  box(metalMat, 0.7, 1.8, 0.7, -6.1, 0.9, 2.6, { collide: true, maxY: 1.8 });
+  box(metalMat, 0.02, 0.5, 0.02, -5.72, 1.2, 2.6, { cast: false });
+  // Mesa pequena no meio da cozinha.
+  box(darkWoodMat, 1.1, 0.08, 0.9, -5.0, 0.78, 1.4,
+    { collide: true, maxY: 0.85 });
+  for (const [mx, mz] of [[-5.45, 1.05], [-4.55, 1.05], [-5.45, 1.75], [-4.55, 1.75]]) {
+    box(darkWoodMat, 0.07, 0.75, 0.07, mx, 0.38, mz);
+  }
+
+  /* ---- Banheiro dentro da cozinha ------------------------------------ */
+  // Canto de trás da cozinha: x -6,6..-5,2 e z -3,6..-1,3. A porta fica na
+  // parede lateral, para a bancada não estreitar a passagem.
+  const bathX = -5.2, bathZ = -1.3, bathDoorZ0 = -2.6, bathDoorZ1 = -1.5;
+  box(wallMat, bathX + hw, h, wall, (-hw + bathX) / 2, h / 2, bathZ, { collide: true });
+  box(wallMat, wall, h, bathDoorZ0 + hd, bathX, h / 2, (-hd + bathDoorZ0) / 2, { collide: true });
+  box(wallMat, wall, h, bathZ - bathDoorZ1, bathX, h / 2, (bathDoorZ1 + bathZ) / 2, { collide: true });
+  box(wallMat, wall, h - 2.0, bathDoorZ1 - bathDoorZ0, bathX,
+    2.0 + (h - 2.0) / 2, (bathDoorZ0 + bathDoorZ1) / 2,
+    { collide: true, minY: 2.0, maxY: h });
+  // Folha da porta, encostada na parede do banheiro (vão livre para passar).
+  box(woodMat, 0.05, 1.95, 0.9, bathX + 0.12, 0.98, bathDoorZ1 - 0.12,
+    { rotY: 1.15, cast: false });
+  // Sanitário, lavatório e o tanque do chuveiro.
+  box(metalMat, 0.42, 0.4, 0.55, -6.1, 0.2, -3.0, { collide: true, maxY: 0.45 });
+  cyl(ceramic, 0.23, 0.06, -6.1, 0.43, -2.95, { segs: 18 });
+  box(woodMat, 0.5, 0.12, 0.38, -5.55, 0.85, -3.2, { collide: true, maxY: 0.95 });
+  cyl(metalMat, 0.022, 0.18, -5.55, 0.98, -3.2, { segs: 8 });
+  for (const [fx, fz] of [[-6.25, -2.0], [-5.75, -2.0]]) {
+    cyl(metalMat, 0.012, 1.6, fx, 1.6, fz, { segs: 6 });
+  }
+  cyl(blackMetal, 0.16, 0.02, -6.0, 0.02, -2.0, { segs: 18 });
+
+  /* ---- Escada do porão ao andar de cima ------------------------------ */
+  buildStair(stairX0, stairX1, stairZ0, stairZ1, 0, upperY, steps);
+  // Sem madeiras/corrimão nas laterais: a escada fica aberta, com o último
+  // degrau rente ao piso do andar de cima.
 
   /* ---- Andar de cima: corredor + quarto ------------------------------ */
   const uy = upperY, uh = h;
@@ -228,9 +308,55 @@ export function createRoom(scene, tex) {
   box(darkWoodMat, 0.55, 0.6, 0.5, 3.1, uy + 0.3, -2.9,
     { collide: true, minY: uy, maxY: uy + 0.8 });
   box(woodMat, 0.6, 0.05, 0.55, 3.1, uy + 0.62, -2.9);
-  box(darkWoodMat, 0.9, 1.9, 1.2, 3.4, uy + 0.95, 0.1,
+  box(darkWoodMat, 0.9, 1.9, 1.2, 6.0, uy + 0.95, -0.6,
     { collide: true, minY: uy, maxY: uy + 2 });
-  box(woodMat, 0.035, 1.7, 0.5, 2.93, uy + 0.95, 0.1, { cast: false });
+  box(woodMat, 0.035, 1.7, 0.5, 5.53, uy + 0.95, -0.6, { cast: false });
+
+  /* ---- Segundo quarto (ala esquerda do andar de cima) ---------------- */
+  // Mesmo vão da cozinha, um andar acima: a porta fica atrás da escada.
+  const bed2DoorZ0 = -3.4, bed2DoorZ1 = -2.3;
+  box(wallMat, wall, uh, bed2DoorZ0 + hd, kitX, uy + uh / 2, (-hd + bed2DoorZ0) / 2,
+    { collide: true, minY: uy, maxY: uy + uh });
+  box(wallMat, wall, uh, hd - bed2DoorZ1, kitX, uy + uh / 2, (bed2DoorZ1 + hd) / 2,
+    { collide: true, minY: uy, maxY: uy + uh });
+  box(wallMat, wall, uh - 2.0, bed2DoorZ1 - bed2DoorZ0, kitX, uy + 2.0 + (uh - 2.0) / 2,
+    (bed2DoorZ0 + bed2DoorZ1) / 2, { collide: true, minY: uy + 2.0, maxY: uy + uh });
+  for (const zz of [bed2DoorZ0 + 0.05, bed2DoorZ1 - 0.05]) {
+    box(darkWoodMat, 0.09, 2.05, 0.08, kitX + 0.09, uy + 1.03, zz, { cast: false });
+  }
+  box(darkWoodMat, 0.09, 0.1, bed2DoorZ1 - bed2DoorZ0, kitX + 0.09, uy + 2.02,
+    (bed2DoorZ0 + bed2DoorZ1) / 2, { cast: false });
+  box(woodMat, 1.05, 2.0, 0.05, kitX - 0.42, uy + 1.0, bed2DoorZ0 + 0.12,
+    { rotY: 1.35, cast: false });
+  // frente do segundo quarto
+  box(wallMat, kitX + hw, uh, wall, (kitX - hw) / 2, uy + uh / 2, 1.2,
+    { collide: true, minY: uy, maxY: uy + uh });
+  // cama estreita e guarda-roupa
+  box(darkWoodMat, 1.2, 0.26, 1.9, -5.5, uy + 0.13, -2.4,
+    { collide: true, minY: uy, maxY: uy + 1.1 });
+  box(cardboard, 1.1, 0.2, 1.8, -5.5, uy + 0.36, -2.4);
+  box(darkWoodMat, 0.8, 1.8, 0.5, -6.1, uy + 0.9, 0.4,
+    { collide: true, minY: uy, maxY: uy + 2 });
+
+  /* ---- Escada do sótão, no canto direito do quarto -------------------- */
+  // Sem porta separada: a escada fica no mesmo quarto, com a boca rente à
+  // parede da frente. O guarda-roupa foi para o canto, deixando a passagem.
+  buildStair(atticX0, atticX1, atticZ0, atticZ1, upperY, atticY, steps);
+
+  /* ---- Sótão --------------------------------------------------------- */
+  const ay = atticY, ah = atticH;
+  box(wallMat, wall, ah, d, -hw, ay + ah / 2, 0, { collide: true, minY: ay, maxY: ay + ah });
+  box(wallMat, wall, ah, d, hw, ay + ah / 2, 0, { collide: true, minY: ay, maxY: ay + ah });
+  box(wallMat, w, ah, wall, 0, ay + ah / 2, hd, { collide: true, minY: ay, maxY: ay + ah });
+  box(wallMat, w, ah, wall, 0, ay + ah / 2, -hd, { collide: true, minY: ay, maxY: ay + ah });
+  // vigas do telhado e some caixas velhas guardadas
+  for (const z of [-2.6, -0.6, 1.4, 3.0]) {
+    box(darkWoodMat, w - 0.4, 0.16, 0.14, 0, ay + ah - 0.16, z, { cast: false });
+  }
+  for (const [x, z] of [[-5.6, -2.6], [-4.8, -2.2], [6.0, 2.4], [-1.5, 2.2]]) {
+    box(cardboard, 0.6, 0.5, 0.5, x, ay + 0.25, z,
+      { collide: true, minY: ay, maxY: ay + 0.6 });
+  }
 
   /* ---- Sangue na cama e nas paredes ---------------------------------- */
   function blood(w, h, x, y, z, rotX = 0, rotY = 0) {
@@ -292,8 +418,8 @@ export function createRoom(scene, tex) {
   box(blackMetal, 0.5, 0.08, 0.5, 3.15, 0.04, -2.75, { cast: false });
   addCollider(3.15, -2.75, 0.8, 0.8);
 
-  /* ---- Prateleira na parede esquerda -------------------------------- */
-  const sx = -3.75, sz = -2.65, sw = 1.4, sd = 0.46;
+  /* ---- Prateleira no depósito da direita ----------------------------- */
+  const sx = 5.9, sz = -2.4, sw = 1.4, sd = 0.46;
   for (const zz of [sz - sw / 2, sz + sw / 2]) box(darkWoodMat, sd, 2.25, 0.05, sx, 1.13, zz);
   for (const yy of [0.12, 0.66, 1.2, 1.74, 2.23]) box(woodMat, sd, 0.045, sw, sx, yy, sz);
   box(darkWoodMat, 0.03, 2.25, sw, sx - sd / 2, 1.13, sz, { cast: false });
@@ -347,7 +473,7 @@ export function createRoom(scene, tex) {
   /* ---- Caixas empilhadas -------------------------------------------- */
   // Nenhuma pilha de caixas bloqueia a aproximação da porta de saída.
   const stacks = [
-    [3.2, 2.8, 2], [1.6, 3.05, 1], [-3.1, -2.5, 2], [1.9, -2.9, 1],
+    [3.2, 2.8, 2], [1.6, 3.05, 1], [-2.2, -3.15, 2], [1.9, -2.9, 1],
   ];
   for (const [x, z, n] of stacks) {
     for (let i = 0; i < n; i++) {
@@ -447,19 +573,31 @@ export function createRoom(scene, tex) {
   const zones = [
     // corredor ( dividido para não “puxar” o jogador para o andar de cima
     // quando ele estiver embaixo, na boca da escada )
-    { minX: -hw + 0.2, maxX: stairX0, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY },
-    { minX: stairX0, maxX: stairX1, minZ: -hd + 0.2, maxZ: stairZ0, y: upperY },
-    { minX: stairX1, maxX: -0.7, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY },
-    // quarto
-    { minX: -0.7, maxX: hw - 0.2, minZ: -hd + 0.2, maxZ: 1.2, y: upperY },
+    { minX: -hw + 0.2, maxX: stairX0, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY, level: 1 },
+    { minX: stairX0, maxX: stairX1, minZ: -hd + 0.2, maxZ: stairZ0, y: upperY, level: 1 },
+    { minX: stairX1, maxX: -0.7, minZ: -hd + 0.2, maxZ: hd - 0.2, y: upperY, level: 1 },
+    // quarto principal
+    { minX: -0.7, maxX: hw - 0.2, minZ: -hd + 0.2, maxZ: 1.2, y: upperY, level: 1 },
+    // sótão, em volta do vão da segunda escada
+    { minX: -hw + 0.2, maxX: atticX0, minZ: -hd + 0.2, maxZ: hd - 0.2, y: atticY, level: 2 },
+    { minX: atticX0, maxX: atticX1, minZ: -hd + 0.2, maxZ: atticZ0, y: atticY, level: 2 },
+    { minX: atticX1, maxX: hw - 0.2, minZ: -hd + 0.2, maxZ: hd - 0.2, y: atticY, level: 2 },
+    { minX: atticX0, maxX: atticX1, minZ: atticZ1, maxZ: hd - 0.2, y: atticY, level: 2 },
     // porão
-    { minX: -hw, maxX: hw, minZ: -hd, maxZ: hd, y: 0 },
+    { minX: -hw, maxX: hw, minZ: -hd, maxZ: hd, y: 0, level: 0 },
   ];
-  const ramps = [{
-    minX: stairX0, maxX: stairX1,
-    zMin: stairZ0, zMax: stairZ1,
-    yBottom: 0, yTop: upperY, steps,
-  }];
+  const ramps = [
+    {
+      minX: stairX0, maxX: stairX1,
+      zMin: stairZ0, zMax: stairZ1,
+      yBottom: 0, yTop: upperY, steps, fromLevel: 0, toLevel: 1,
+    },
+    {
+      minX: atticX0, maxX: atticX1,
+      zMin: atticZ0, zMax: atticZ1,
+      yBottom: upperY, yTop: atticY, steps, fromLevel: 1, toLevel: 2,
+    },
+  ];
 
   // Tudo o que a física usa passa para coordenadas de mundo.
   const keys = ['minX', 'maxX', 'minZ', 'maxZ', 'zMin', 'zMax', 'minY', 'maxY', 'y', 'yBottom', 'yTop'];

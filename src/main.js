@@ -86,11 +86,12 @@ let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 /* ---- Partida: pilha, chave, frases ditas uma única vez ---------------- */
 let batterySeconds = BATTERY_SECONDS, spares = 0, hasKey = false;
 let lowWarned = false, doomed = false, doomTimer = 0, deathVideoPlaying = false, winVideoPlaying = false, trailerPlaying = false;
-let shake = 0, creakStep = 0, statusClock = 0;
+let shake = 0, creakStep = 0, atticCreakStep = 0, statusClock = 0;
 let safeUI = false, safeInput = '', paperUI = false, activeTarget = null, actionLabel = '';
 const saidPhrases = new Set();
 const doorPos = new THREE.Vector3(-1.85 * SCALE, 0, 3.4 * SCALE);
 const creakMarks = [1.6, 0.2, -1.2].map((z) => z * SCALE);
+const atticCreakMarks = [0.9, -0.6, -2.1].map((z) => z * SCALE);
 
 const fmtTime = (s) => {
   const v = Math.max(0, Math.ceil(s));
@@ -545,11 +546,19 @@ function safeSubmit() {
 
 function checkStairCreaks() {
   const p = camera.position;
-  if (p.x < -3.85 * SCALE || p.x > -2.65 * SCALE) return;
-  if (p.z > 3.0 * SCALE || controls.floorY <= 0.05) { creakStep = 0; return; }
-  if (creakStep < creakMarks.length && p.z <= creakMarks[creakStep]) {
-    audio.creak();
-    creakStep++;
+  const first = p.x >= -3.85 * SCALE && p.x <= -2.65 * SCALE && controls.floorY < 3 * SCALE;
+  const second = p.x >= 4.35 * SCALE && p.x <= 5.55 * SCALE && controls.floorY >= 3 * SCALE;
+  if (!first && !second) { creakStep = 0; atticCreakStep = 0; return; }
+  if (first) {
+    if (p.z > 3.0 * SCALE || controls.floorY <= 0.05) { creakStep = 0; return; }
+    if (creakStep < creakMarks.length && p.z <= creakMarks[creakStep]) {
+      audio.creak(); creakStep++;
+    }
+  } else {
+    if (p.z > 1.2 * SCALE || controls.floorY <= 3.05 * SCALE) { atticCreakStep = 0; return; }
+    if (atticCreakStep < atticCreakMarks.length && p.z <= atticCreakMarks[atticCreakStep]) {
+      audio.creak(); atticCreakStep++;
+    }
   }
 }
 
@@ -596,13 +605,27 @@ function onScare() {
 function maybeHint() {
   const p = camera.position;
   if (elapsed - lastHint < 8) return;
+  if (controls.floorY > 5.5 * SCALE) {
+    showPhrase('attic', 'O sótão. O telhado range acima da sua cabeça.', 4);
+    lastHint = elapsed;
+    return;
+  }
   if (controls.floorY > 2.5 * SCALE) {
-    showPhrase('upper', 'O corredor cheira a mofo. O quarto está mais adiante.', 4);
+    if (p.x > 3.9 * SCALE && p.z > -1.6 * SCALE && p.z < 1.2 * SCALE) {
+      showPhrase('atticStair', 'Outra escada, mais estreita. Sobe para o sótão.', 4);
+    } else {
+      showPhrase('upper', 'O corredor cheira a mofo. Tem outro quarto e um sótão.', 4);
+    }
     lastHint = elapsed;
     return;
   }
   if (Math.abs(p.x + 3.25 * SCALE) < 0.7 * SCALE && p.z > 2.3 * SCALE && p.z < 3.3 * SCALE) {
     showPhrase('stairs', 'Uma escada. As tábuas parecem firmes.', 4);
+    lastHint = elapsed;
+    return;
+  }
+  if (p.x < -3.4 * SCALE && p.z < -1.8 * SCALE) {
+    showPhrase('kitchen', 'Uma porta leva à cozinha. O banheiro fica no fundo dela.', 4);
     lastHint = elapsed;
     return;
   }
@@ -677,7 +700,7 @@ function restartGame() {
   $('win-video').classList.remove('visible');
   batterySeconds = BATTERY_SECONDS; spares = 0; hasKey = false;
   lowWarned = false; doomed = false; doomTimer = 0;
-  shake = 0; creakStep = 0; statusClock = 0;
+  shake = 0; creakStep = 0; atticCreakStep = 0; statusClock = 0;
   flickerUntil = -1;
   safeUI = false; safeInput = ''; paperUI = false; activeTarget = null; actionLabel = '';
   $('safe').classList.remove('visible');

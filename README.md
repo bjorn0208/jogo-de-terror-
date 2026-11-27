@@ -64,18 +64,27 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
 
 - **Trailer de abertura** em vídeo, exibido em tela cheia antes do menu, com
   botão para pular e opção de ativar o som se o autoplay com áudio for bloqueado.
-- Casa em **tamanho normal** (8,4 × 7,2 × 3 m por andar). O porão tem paredes e
-  piso de concreto, janela gradeada e a **única porta da casa** (a de saída,
-  trancada, com o caminho livre de caixas). Também tem canos, caldeira,
-  prateleiras, bancada, cadeira tombada, entulho, poças, manchas e teias.
+- Casa ampliada para **13,2 × 7,2 × 3 m por andar**, mais um **sótão** de 2,2 m
+  de altura. O porão mantém a janela gradeada e a **porta de saída trancada**
+  (caminho livre de caixas), além de canos, caldeira, prateleiras, bancada,
+  cadeira tombada, entulho, poças, manchas e teias.
+- **Cozinha no porão**, pela porta aberta na ala esquerda: bancada, pia, fogão,
+  geladeira e mesa. Dentro dela, um **banheiro** com sanitário, lavatório e
+  chuveiro, com porta própria na parede lateral.
+- **Segundo quarto no andar de cima**, na mesma ala esquerda, com cama estreita
+  e guarda-roupa.
+- **Escada do sótão** no canto direito do quarto: 30 degraus abertos, mesma
+  rampa sólida da primeira escada, sem corrimão ou madeiras laterais. O piso
+  tem dois vãos recortados para as escadas passarem.
 - Escada de 30 degraus totalmente aberta: **sem madeiras laterais, sem corrimão
   e sem cano de ferro atravessando os degraus**. Os degraus são finos e ficam
   sobre uma rampa sólida (nada de colunas com cara de espetos na lateral), com o
   último degrau rente ao piso. O **andar de cima tem laje com espessura**, sem
   planos sobrepostos. Sobe até um **andar superior** com corredor e quarto — o
   quarto é
-  aberto, sem porta nem batente. O jogador sobe e desce com piso interpolado;
-  as colisões são separadas por andar. Móveis e jogador usam a mesma escala.
+  aberto, sem porta nem batente. O jogador sobe e desce entre **três níveis**
+  (porão, andar de cima e sótão) com piso interpolado; as colisões são
+  separadas por andar. Móveis e jogador usam a mesma escala.
 - **Texturas 100% procedurais**: cor, normal e rugosidade geradas em canvas
   (umidade, rachaduras, ferrugem, veios de madeira, cascalho). Nenhum asset
   externo é baixado.
@@ -97,8 +106,8 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   você vence. As frases automáticas da história aparecem **no máximo uma vez por
   partida** (a folha pode ser relida, pois é ação direta do jogador).
 - Sangue na cama e nas paredes do quarto, ratos que dão sustos curtos com
-  guincho e um tremor leve de câmera (sem flash vermelho), rangidos ao subir a
-  escada e uma lâmpada do andar de cima que pisca a cada 30 segundos. A entrada
+  guincho e um tremor leve de câmera (sem flash vermelho), rangidos nas duas
+  escadas e uma lâmpada do andar de cima que pisca a cada 30 segundos. A entrada
   da escada ao lado da porta ficou aberta, com mais espaço para passar.
 
 ## No celular

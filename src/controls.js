@@ -29,7 +29,7 @@ export class Controls {
     this.zones = [];
     this.ramps = [];
     this.floorY = 0;
-    this.level = 0; // 0 = porão, 1 = andar de cima
+    this.level = 0; // 0 = porão, 1 = andar de cima, 2 = sótão
 
     this._onMouse = (e) => {
       if (!this.enabled) return;
@@ -114,7 +114,7 @@ export class Controls {
 
   reset(spawn) {
     this.floorY = spawn.y || 0;
-    this.level = this.floorY > 1 ? 1 : 0;
+    this.level = this.floorY > 4.5 ? 2 : this.floorY > 1 ? 1 : 0;
     this.baseEye = this.floorY + this.eyeHeight;
     this.camera.position.set(spawn.x, this.baseEye, spawn.z);
     this.touchMove.x = this.touchMove.y = 0;
@@ -142,16 +142,17 @@ export class Controls {
         const t = Math.max(0, Math.min(1, (r.zMax - z) / (r.zMax - r.zMin)));
         // degraus: piso sobe de vez em quando, não como rampa lisa
         const f = r.steps ? Math.min(r.steps, Math.floor(t * r.steps)) / r.steps : t;
-        // define o nível antes do último degrau: o próximo passo já sai da rampa
-        this.level = f >= 0.5 ? 1 : 0;
+        // troca de nível no meio da escada: o próximo passo já sai da rampa
+        const from = r.fromLevel ?? 0, to = r.toLevel ?? from + 1;
+        this.level = f >= 0.5 ? to : from;
         return r.yBottom + (r.yTop - r.yBottom) * f;
       }
     }
-    if (this.level === 1) {
+    if (this.level > 0) {
       for (const zone of this.zones) {
-        if (zone.y > 1 && x >= zone.minX && x <= zone.maxX && z >= zone.minZ && z <= zone.maxZ) {
-          return zone.y;
-        }
+        const zl = zone.level ?? (zone.y > 1 ? 1 : 0);
+        if (zl !== this.level) continue;
+        if (x >= zone.minX && x <= zone.maxX && z >= zone.minZ && z <= zone.maxZ) return zone.y;
       }
       return this.floorY; // nunca cai por um buraco de zona
     }
