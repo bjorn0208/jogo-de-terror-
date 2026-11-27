@@ -64,8 +64,11 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   trancada, com o caminho livre de caixas). Também tem canos, caldeira,
   prateleiras, bancada, cadeira tombada, entulho, poças, manchas e teias.
 - Escada de 30 degraus totalmente aberta: **sem madeiras laterais, sem corrimão
-  e sem cano de ferro atravessando os degraus**. Sobe até um **andar superior**
-  com corredor e quarto — o quarto é
+  e sem cano de ferro atravessando os degraus**. Os degraus são finos e ficam
+  sobre uma rampa sólida (nada de colunas com cara de espetos na lateral), com o
+  último degrau rente ao piso. O **andar de cima tem laje com espessura**, sem
+  planos sobrepostos. Sobe até um **andar superior** com corredor e quarto — o
+  quarto é
   aberto, sem porta nem batente. O jogador sobe e desce com piso interpolado;
   as colisões são separadas por andar. Móveis e jogador usam a mesma escala.
 - **Texturas 100% procedurais**: cor, normal e rugosidade geradas em canvas

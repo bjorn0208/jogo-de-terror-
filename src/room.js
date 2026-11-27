@@ -75,6 +75,15 @@ export function createRoom(scene, tex) {
     return m;
   }
 
+  /** Piso do andar de cima com espessura: nada de planos sobrepostos. */
+  function upperFloor(mat, x0, x1, z0, z1, y) {
+    const thick = 0.1;
+    const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, thick, z1 - z0), mat);
+    m.position.set((x0 + x1) / 2, y - thick / 2, (z0 + z1) / 2);
+    m.receiveShadow = true; group.add(m);
+    return m;
+  }
+
   function cyl(mat, radius, height, x, y, z, opts = {}) {
     const m = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, height, opts.segs || 16), mat);
     m.position.set(x, y, z);
@@ -103,8 +112,10 @@ export function createRoom(scene, tex) {
     [stairX0, stairX1, stairZ1, hd],
   ];
   for (const [x0, x1, z0, z1] of slabs) {
-    slab(ceilMat, x0, x1, z0, z1, upperY, false); // visto de baixo
-    slab(floorMat, x0, x1, z0, z1, upperY, true); // piso do corredor/quarto
+    // teto do porão fica logo abaixo da laje, sem planos na mesma altura
+    slab(ceilMat, x0, x1, z0, z1, upperY - 0.12, false);
+    // piso do andar de cima: laje sólida, sem z-fighting nem falhas
+    upperFloor(floorMat, x0, x1, z0, z1, upperY);
   }
   slab(ceilMat, -hw, hw, -hd, hd, upperY + h, false);
 
@@ -155,18 +166,25 @@ export function createRoom(scene, tex) {
   box(darkWoodMat, 0.05, 0.14, d, hw - 0.14, 0.07, 0, { cast: false });
 
   /* ---- Escada -------------------------------------------------------- */
-  // 30 degraus: a subida toda tem 3 m, cerca de 0,10 m por degrau.
+  // Uma rampa sólida sustenta 30 degraus finos. Antes cada degrau era uma
+  // coluna até o chão e a lateral virava uma fileira de "espetos".
   const steps = 30;
+  const run = stairZ1 - stairZ0;
+  const slope = Math.atan2(upperY, run);
+  const rampLen = Math.hypot(run, upperY);
+  box(darkWoodMat, stairX1 - stairX0 - 0.06, 0.12, rampLen,
+    (stairX0 + stairX1) / 2, upperY / 2 - 0.06, (stairZ0 + stairZ1) / 2,
+    { rotX: slope, cast: false });
   for (let i = 0; i < steps; i++) {
     const t0 = i / steps, t1 = (i + 1) / steps;
-    const zFront = stairZ1 - t0 * (stairZ1 - stairZ0);
-    const zBack = stairZ1 - t1 * (stairZ1 - stairZ0);
-    const top = Math.max(0.02, upperY * t0);
-    box(darkWoodMat, stairX1 - stairX0 - 0.06, top, zFront - zBack,
-      (stairX0 + stairX1) / 2, top / 2, (zFront + zBack) / 2, { cast: false });
+    const zFront = stairZ1 - t0 * run;
+    const zBack = stairZ1 - t1 * run;
+    const top = Math.max(0.06, upperY * t1);
+    box(darkWoodMat, stairX1 - stairX0 - 0.06, 0.06, zFront - zBack,
+      (stairX0 + stairX1) / 2, top - 0.03, (zFront + zBack) / 2, { cast: false });
   }
-  // Sem madeiras/corrimão nas laterais: a escada fica totalmente aberta.
-  // Os degraus continuam guiando o caminho; nada mais aperta a passagem.
+  // Sem madeiras/corrimão nas laterais: a escada fica aberta, com acabamento
+  // limpo na lateral e o último degrau rente ao piso do andar de cima.
 
   /* ---- Andar de cima: corredor + quarto ------------------------------ */
   const uy = upperY, uh = h;
