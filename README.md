@@ -10,7 +10,7 @@ O repositório estava vazio; este é o ponto de partida.
 
 Abra **`index.html`** no navegador (funciona direto do arquivo, sem servidor e
 sem internet). O **trailer abre antes do menu**; quando ele termina (ou ao clicar
-em **PULAR**), aparece o menu e aí sim você clica em **ENTRAR NO PORÃO**.
+em **PULAR**), aparece uma tela escura com o texto **entrar no porão** no meio.
 
 | Tecla | Ação |
 | --- | --- |
@@ -109,8 +109,8 @@ resolução das texturas (256 px), sombra (512 px) e desliga antialias para o
 jogo carregar e rodar mais rápido. O pós-processamento tem fallback para
 render direto caso o aparelho não suporte.
 
-Se o jogo ficar preso em "CARREGANDO AMBIENTE...", aparecerá um aviso vermelho
-com o erro na parte de baixo da tela.
+Se o texto "entrar no porão" continuar apagado por muito tempo, aparecerá um
+aviso vermelho com o erro na parte de baixo da tela.
 
 ### Erro "Error creating WebGL context"
 

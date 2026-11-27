@@ -14,7 +14,6 @@ const overlay = $('overlay');
 const pauseEl = $('pause');
 const hud = $('hud');
 const startBtn = $('start-btn');
-const startLabel = $('start-label');
 const hintEl = $('hint');
 const touchEl = $('touch');
 const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
@@ -618,11 +617,9 @@ const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => res
 
 async function build() {
   try {
-    startLabel.textContent = 'GERANDO TEXTURAS...';
     await nextFrame();
     const tex = buildTextures(lowEnd);
 
-    startLabel.textContent = 'MONTANDO O PORÃO...';
     await nextFrame();
     room = createRoom(scene, tex);
     controls.colliders = room.colliders;
@@ -638,12 +635,10 @@ async function build() {
     post?.setSize(window.innerWidth, window.innerHeight);
 
     startBtn.disabled = false;
-    startLabel.textContent = isTouch ? 'ENTRAR' : 'ENTRAR NO PORÃO';
   } catch (err) {
     console.error(err);
     window.__showError?.('Falha ao montar: ' + (err && err.message ? err.message : err));
     startBtn.disabled = false;
-    startLabel.textContent = 'TENTAR ENTRAR';
   }
 }
 
