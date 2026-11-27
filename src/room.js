@@ -43,6 +43,21 @@ export function createRoom(scene, tex) {
   const stainMat = new THREE.MeshStandardMaterial({ map: tex.stain, transparent: true, opacity: 0.85, depthWrite: false, roughness: 1, color: 0x6d725f, side: THREE.DoubleSide });
   const bloodMat = new THREE.MeshStandardMaterial({ map: tex.stain, transparent: true, opacity: 0.9, depthWrite: false, roughness: 1, color: 0x651a14, side: THREE.DoubleSide });
   const ceramic = new THREE.MeshStandardMaterial({ color: 0xb9b9ad, roughness: 0.5 });
+  // Superfícies queimadas, mofo, ferrugem e o plástico dos corpos do sótão.
+  const sootMat = new THREE.MeshStandardMaterial({ map: tex.stain, transparent: true, opacity: 0.82, depthWrite: false, roughness: 1, color: 0x121310, side: THREE.DoubleSide });
+  const rustMat = new THREE.MeshStandardMaterial({ map: tex.stain, transparent: true, opacity: 0.72, depthWrite: false, roughness: 1, color: 0x6b321d, side: THREE.DoubleSide });
+  const mildewMat = new THREE.MeshStandardMaterial({ map: tex.stain, transparent: true, opacity: 0.78, depthWrite: false, roughness: 1, color: 0x35452c, side: THREE.DoubleSide });
+  const burntMat = new THREE.MeshStandardMaterial({ ...tex.metal, color: 0x191c18, roughness: 1, metalness: 0.35 });
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2924, roughness: 1 });
+  const bagMat = new THREE.MeshStandardMaterial({
+    color: 0xb8b9ad, roughness: 0.42, metalness: 0.05,
+    transparent: true, opacity: 0.52, depthWrite: false, side: THREE.DoubleSide,
+  });
+  const flyBodyMat = new THREE.MeshStandardMaterial({ color: 0x0b0d0b, roughness: 0.75 });
+  const flyWingMat = new THREE.MeshStandardMaterial({
+    color: 0xb7b6a8, roughness: 0.3, transparent: true, opacity: 0.38,
+    depthWrite: false, side: THREE.DoubleSide,
+  });
 
   function register(mesh, cast = true, receive = true) {
     mesh.castShadow = cast; mesh.receiveShadow = receive;
@@ -92,6 +107,15 @@ export function createRoom(scene, tex) {
     if (opts.axis === 'z') m.rotation.x = Math.PI / 2;
     if (opts.rot) m.rotation.set(opts.rot[0], opts.rot[1], opts.rot[2]);
     register(m);
+    return m;
+  }
+
+  /** Mancha ou fuligem colada numa parede/piso, sem virar objeto sólido. */
+  function decal(mat, w, hh, x, y, z, rotX = 0, rotY = 0, rotZ = 0) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, hh), mat);
+    m.position.set(x, y, z);
+    m.rotation.set(rotX, rotY, rotZ);
+    group.add(m);
     return m;
   }
 
@@ -218,37 +242,81 @@ export function createRoom(scene, tex) {
   box(darkWoodMat, 0.05, 0.14, d, hw - 0.14, 0.07, 0, { cast: false });
 
   /* ---- Cozinha no porão (ala esquerda) ------------------------------- */
-  // Divisória com porta aberta para a cozinha. O vão fica atrás do topo da
-  // escada, para não dar no meio dos degraus.
-  const kitX = -4.2, kitDoorZ0 = -3.4, kitDoorZ1 = -2.3;
+  // Vão amplo na frente, junto da boca da escada. A cozinha aparece assim que
+  // o jogador entra, em vez de ficar escondida atrás do topo da escada.
+  const kitX = -4.2, kitDoorZ0 = 2.05, kitDoorZ1 = 3.15;
   box(wallMat, wall, h, kitDoorZ0 + hd, kitX, h / 2, (-hd + kitDoorZ0) / 2, { collide: true });
   box(wallMat, wall, h, hd - kitDoorZ1, kitX, h / 2, (kitDoorZ1 + hd) / 2, { collide: true });
   box(wallMat, wall, h - 2.0, kitDoorZ1 - kitDoorZ0, kitX, 2.0 + (h - 2.0) / 2,
     (kitDoorZ0 + kitDoorZ1) / 2, { collide: true, minY: 2.0, maxY: h });
-  // Batentes e folha aberta: o vão continua livre para caminhar.
-  for (const zz of [kitDoorZ0 + 0.05, kitDoorZ1 - 0.05]) {
-    box(darkWoodMat, 0.09, 2.05, 0.08, kitX + 0.09, 1.03, zz, { cast: false });
+  // Azulejos fuliginados nos dois lados do vão; não há folha de porta.
+  for (const side of [-1, 1]) {
+    decal(sootMat, kitDoorZ1 - kitDoorZ0, 2.05,
+      kitX + side * (wall / 2 + 0.012), 1.03, (kitDoorZ0 + kitDoorZ1) / 2,
+      0, side * Math.PI / 2, 0);
+    decal(rustMat, 0.16, 2.0,
+      kitX + side * (wall / 2 + 0.018), 1.0, kitDoorZ0 + 0.06,
+      0, side * Math.PI / 2, 0);
   }
-  box(darkWoodMat, 0.09, 0.1, kitDoorZ1 - kitDoorZ0, kitX + 0.09, 2.02,
+  for (const zz of [kitDoorZ0 + 0.04, kitDoorZ1 - 0.04]) {
+    box(burntMat, 0.12, 2.02, 0.07, kitX + 0.09, 1.01, zz, { cast: false });
+  }
+  box(burntMat, 0.12, 0.1, kitDoorZ1 - kitDoorZ0, kitX + 0.09, 2.01,
     (kitDoorZ0 + kitDoorZ1) / 2, { cast: false });
-  box(woodMat, 1.05, 2.0, 0.05, kitX - 0.42, 1.0, kitDoorZ0 + 0.12, { rotY: 1.35, cast: false });
 
-  // Bancadas, pia, fogão e geladeira. A bancada começa depois da porta do
-  // banheiro, para deixar a passagem livre.
+  /* ---- Bancada, pia, fogão, armário e geladeira queimados ------------- */
   box(darkWoodMat, 0.6, 0.85, 2.4, -6.15, 0.43, 0.9, { collide: true, maxY: 0.9 });
-  box(woodMat, 0.62, 0.05, 2.4, -6.15, 0.87, 0.9);
+  box(burntMat, 0.62, 0.05, 2.4, -6.15, 0.87, 0.9);
+  decal(sootMat, 0.55, 0.62, -6.15, 0.904, 1.6, -Math.PI / 2, 0, 0.22);
+  decal(rustMat, 0.45, 0.4, -6.15, 0.904, 0.35, -Math.PI / 2, 0, -0.3);
+  // Pia entupida e com água escura.
   box(metalMat, 0.5, 0.025, 0.48, -6.15, 0.91, 0.2, { cast: false });
   cyl(metalMat, 0.02, 0.22, -6.15, 1.04, 0.2, { segs: 8 });
-  box(blackMetal, 0.6, 0.05, 0.7, -6.15, 0.91, 1.6);
-  for (const zz of [1.4, 1.8]) box(blackMetal, 0.5, 0.02, 0.02, -6.15, 0.96, zz, { cast: false });
+  const sinkWater = new THREE.Mesh(new THREE.CircleGeometry(0.19, 20), liquid);
+  sinkWater.rotation.x = -Math.PI / 2; sinkWater.position.set(-6.15, 0.925, 0.2);
+  sinkWater.receiveShadow = true; group.add(sinkWater);
+  anim.push((t) => { sinkWater.material.opacity = 0.48 + Math.sin(t * 0.5) * 0.03; });
+
+  // Fogão: tampo preto, bocas uma mais torta que a outra e forno aberto.
+  box(burntMat, 0.62, 0.08, 0.76, -6.15, 0.92, 1.6);
+  for (const [bx, bz, tilt] of [[-6.3, 1.4, 0], [-6.0, 1.4, 0.12], [-6.3, 1.8, -0.1], [-6.0, 1.8, 0.3]]) {
+    const burner = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.018, 6, 18), blackMetal);
+    burner.position.set(bx, 0.97, bz);
+    burner.rotation.set(Math.PI / 2, 0, tilt);
+    register(burner);
+  }
+  box(blackMetal, 0.035, 0.58, 0.7, -5.83, 0.44, 1.6);
+  box(burntMat, 0.04, 0.035, 0.56, -5.8, 0.6, 1.6, { cast: false });
+  decal(sootMat, 1.5, 1.3, -hw + 0.125, 1.55, 1.6, 0, Math.PI / 2, 0);
+  decal(rustMat, 0.8, 0.3, -hw + 0.127, 0.48, 1.6, 0, Math.PI / 2, 0);
+  // Exaustor derretido e duto até o teto.
+  box(burntMat, 0.52, 0.2, 0.72, -6.15, 1.72, 1.6);
+  cyl(burntMat, 0.09, 1.0, -6.15, 2.32, 1.6, { segs: 12 });
+  decal(sootMat, 0.6, 0.5, -hw + 0.128, 2.2, 1.6, 0, Math.PI / 2, 0);
+
+  // Armário superior: porta queimada, pendurada de um lado só.
+  box(darkWoodMat, 0.38, 0.72, 1.1, -6.36, 1.85, 0.35,
+    { collide: true, minY: 1.45, maxY: 2.25 });
+  box(burntMat, 0.04, 0.64, 0.5, -6.14, 1.85, 0.62, { rotY: -0.35, cast: false });
+  decal(mildewMat, 0.34, 0.62, -6.15, 1.85, 0.08, 0, Math.PI / 2, 0);
+  cyl(blackMetal, 0.018, 0.24, -6.02, 1.85, 0.62, { axis: 'z', segs: 8 });
+
+  // Geladeira com ferrugem, porta empenada e puxador arrancado.
   box(metalMat, 0.7, 1.8, 0.7, -6.1, 0.9, 2.6, { collide: true, maxY: 1.8 });
-  box(metalMat, 0.02, 0.5, 0.02, -5.72, 1.2, 2.6, { cast: false });
-  // Mesa pequena no meio da cozinha.
-  box(darkWoodMat, 1.1, 0.08, 0.9, -5.0, 0.78, 1.4,
-    { collide: true, maxY: 0.85 });
+  decal(rustMat, 0.46, 0.92, -5.74, 1.13, 2.6, 0, Math.PI / 2, 0.04);
+  decal(mildewMat, 0.28, 0.3, -5.735, 0.5, 2.75, 0, Math.PI / 2, 0);
+  decal(sootMat, 0.72, 0.72, -6.1, 1.81, 2.6, -Math.PI / 2, 0, 0.1);
+  box(burntMat, 0.035, 0.42, 0.035, -5.72, 1.28, 2.38, { cast: false });
+  box(blackMetal, 0.02, 0.06, 0.12, -5.72, 1.07, 2.38, { cast: false });
+
+  // Mesa suja, com pratos e panelas largadas.
+  box(darkWoodMat, 1.1, 0.08, 0.9, -5.0, 0.78, 1.4, { collide: true, maxY: 0.85 });
   for (const [mx, mz] of [[-5.45, 1.05], [-4.55, 1.05], [-5.45, 1.75], [-4.55, 1.75]]) {
     box(darkWoodMat, 0.07, 0.75, 0.07, mx, 0.38, mz);
   }
+  decal(rustMat, 0.7, 0.5, -5.0, 0.825, 1.4, -Math.PI / 2, 0, 0.4);
+  cyl(ceramic, 0.16, 0.018, -5.2, 0.84, 1.25, { segs: 18 });
+  cyl(blackMetal, 0.12, 0.1, -4.8, 0.87, 1.6, { segs: 16 });
 
   /* ---- Banheiro dentro da cozinha ------------------------------------ */
   // Canto de trás da cozinha: x -6,6..-5,2 e z -3,6..-1,3. A porta fica na
@@ -272,6 +340,19 @@ export function createRoom(scene, tex) {
     cyl(metalMat, 0.012, 1.6, fx, 1.6, fz, { segs: 6 });
   }
   cyl(blackMetal, 0.16, 0.02, -6.0, 0.02, -2.0, { segs: 18 });
+  // Mofo, ferrugem e água parada: o banheiro está tão sujo quanto a cozinha.
+  decal(mildewMat, 1.1, 1.4, -hw + 0.125, 1.35, -2.1, 0, Math.PI / 2, 0);
+  decal(rustMat, 0.5, 0.9, bathX - wall / 2 - 0.013, 1.3, -2.9, 0, -Math.PI / 2, 0);
+  decal(mildewMat, 0.6, 0.5, -5.9, 0.015, -2.45, -Math.PI / 2, 0, 0.2);
+  const toiletWater = new THREE.Mesh(new THREE.CircleGeometry(0.16, 18), liquid);
+  toiletWater.rotation.x = -Math.PI / 2; toiletWater.position.set(-6.1, 0.462, -2.95);
+  toiletWater.receiveShadow = true; group.add(toiletWater);
+  const showerCurtain = new THREE.Mesh(new THREE.PlaneGeometry(0.95, 1.35), mildewMat);
+  showerCurtain.position.set(-5.78, 1.15, -2.0);
+  showerCurtain.rotation.set(0, -Math.PI / 2, 0.12);
+  group.add(showerCurtain);
+  cyl(rustMat, 0.035, 0.12, -6.02, 1.92, -2.0, { segs: 10 });
+  box(cardboardDark, 0.42, 0.03, 0.28, -5.55, 0.98, -3.2, { cast: false });
 
   /* ---- Escada do porão ao andar de cima ------------------------------ */
   buildStair(stairX0, stairX1, stairZ0, stairZ1, 0, upperY, steps);
@@ -325,43 +406,58 @@ export function createRoom(scene, tex) {
   box(woodMat, 0.035, 1.7, 0.5, 5.53, uy + 0.95, -0.6, { cast: false });
 
   /* ---- Segundo quarto (ala esquerda do andar de cima) ---------------- */
-  // Mesmo vão da cozinha, um andar acima: a porta fica atrás da escada.
-  const bed2DoorZ0 = -3.4, bed2DoorZ1 = -2.3;
+  // Vão largo no topo da escada, sem porta, sem batente e sem folha: o quarto
+  // continua sendo um cômodo, mas não há nada que feche a passagem.
+  const bed2DoorZ0 = -3.4, bed2DoorZ1 = -1.85;
   box(wallMat, wall, uh, bed2DoorZ0 + hd, kitX, uy + uh / 2, (-hd + bed2DoorZ0) / 2,
     { collide: true, minY: uy, maxY: uy + uh });
   box(wallMat, wall, uh, hd - bed2DoorZ1, kitX, uy + uh / 2, (bed2DoorZ1 + hd) / 2,
     { collide: true, minY: uy, maxY: uy + uh });
   box(wallMat, wall, uh - 2.0, bed2DoorZ1 - bed2DoorZ0, kitX, uy + 2.0 + (uh - 2.0) / 2,
     (bed2DoorZ0 + bed2DoorZ1) / 2, { collide: true, minY: uy + 2.0, maxY: uy + uh });
-  for (const zz of [bed2DoorZ0 + 0.05, bed2DoorZ1 - 0.05]) {
-    box(darkWoodMat, 0.09, 2.05, 0.08, kitX + 0.09, uy + 1.03, zz, { cast: false });
+  for (const side of [-1, 1]) {
+    decal(sootMat, bed2DoorZ1 - bed2DoorZ0, 2.0,
+      kitX + side * (wall / 2 + 0.012), uy + 1.0, (bed2DoorZ0 + bed2DoorZ1) / 2,
+      0, side * Math.PI / 2, 0);
   }
-  box(darkWoodMat, 0.09, 0.1, bed2DoorZ1 - bed2DoorZ0, kitX + 0.09, uy + 2.02,
-    (bed2DoorZ0 + bed2DoorZ1) / 2, { cast: false });
-  box(woodMat, 1.05, 2.0, 0.05, kitX - 0.42, uy + 1.0, bed2DoorZ0 + 0.12,
-    { rotY: 1.35, cast: false });
+  decal(mildewMat, 0.6, 0.8, -hw + 0.125, uy + 1.45, -0.5, 0, Math.PI / 2, 0);
+  decal(bloodMat, 0.75, 0.55, -5.1, uy + 0.014, -0.75, -Math.PI / 2, 0, 0.4);
   // frente do segundo quarto
   box(wallMat, kitX + hw, uh, wall, (kitX - hw) / 2, uy + uh / 2, 1.2,
     { collide: true, minY: uy, maxY: uy + uh });
-  // cama estreita e guarda-roupa
+  // cama estreita com o colchão afundado
   box(darkWoodMat, 1.2, 0.26, 1.9, -5.5, uy + 0.13, -2.4,
     { collide: true, minY: uy, maxY: uy + 1.1 });
   box(cardboard, 1.1, 0.2, 1.8, -5.5, uy + 0.36, -2.4);
-  box(darkWoodMat, 0.8, 1.8, 0.5, -6.1, uy + 0.9, 0.4,
-    { collide: true, minY: uy, maxY: uy + 2 });
+  box(cardboardDark, 0.62, 0.1, 0.34, -5.5, uy + 0.5, -3.0);
+  decal(sootMat, 0.8, 0.55, -5.5, uy + 0.468, -2.35, -Math.PI / 2, 0, 0.25);
+  // Guarda-roupa alto: a única pilha do jogo fica em cima dele.
+  box(darkWoodMat, 0.85, 1.72, 0.55, -6.05, uy + 0.86, 0.45,
+    { collide: true, minY: uy, maxY: uy + 1.8 });
+  box(woodMat, 0.9, 0.08, 0.6, -6.05, uy + 1.76, 0.45);
+  box(woodMat, 0.04, 1.5, 0.42, -5.61, uy + 0.86, 0.58,
+    { rotY: -0.42, cast: false });
+  box(burntMat, 0.04, 1.5, 0.16, -5.62, uy + 0.86, 0.2, { cast: false });
+  cyl(metalMat, 0.012, 0.16, -5.55, uy + 1.0, 0.63, { axis: 'z', segs: 8 });
+  decal(mildewMat, 0.5, 0.7, -5.6, uy + 1.05, 0.42, 0, Math.PI / 2, 0);
+  // mala e caixa virada, para o quarto não ficar vazio
+  box(cardboardDark, 0.72, 0.32, 0.42, -6.2, uy + 0.16, 1.15,
+    { collide: true, minY: uy, maxY: uy + 0.4, rotY: 0.2 });
+  box(darkWoodMat, 0.5, 0.4, 0.42, -6.1, uy + 0.2, -1.0,
+    { collide: true, minY: uy, maxY: uy + 0.45, rotY: -0.3 });
 
   /* ---- Escada do sótão, no canto direito do quarto -------------------- */
   // Sem porta separada: a escada fica no mesmo quarto, com a boca rente à
   // parede da frente. O guarda-roupa foi para o canto, deixando a passagem.
   buildStair(atticX0, atticX1, atticZ0, atticZ1, upperY, atticY, steps);
 
-  /* ---- Sótão --------------------------------------------------------- */
+  /* ---- Sótão: móveis quebrados, sacos e moscas ------------------------ */
   const ay = atticY, ah = atticH;
   box(wallMat, wall, ah, d, -hw, ay + ah / 2, 0, { collide: true, minY: ay, maxY: ay + ah });
   box(wallMat, wall, ah, d, hw, ay + ah / 2, 0, { collide: true, minY: ay, maxY: ay + ah });
   box(wallMat, w, ah, wall, 0, ay + ah / 2, hd, { collide: true, minY: ay, maxY: ay + ah });
   box(wallMat, w, ah, wall, 0, ay + ah / 2, -hd, { collide: true, minY: ay, maxY: ay + ah });
-  // vigas do telhado e some caixas velhas guardadas
+  // vigas do telhado e algumas caixas velhas guardadas
   for (const z of [-2.6, -0.6, 1.4, 3.0]) {
     box(darkWoodMat, w - 0.4, 0.16, 0.14, 0, ay + ah - 0.16, z, { cast: false });
   }
@@ -369,6 +465,120 @@ export function createRoom(scene, tex) {
     box(cardboard, 0.6, 0.5, 0.5, x, ay + 0.25, z,
       { collide: true, minY: ay, maxY: ay + 0.6 });
   }
+
+  // Peças soltas: cada móvel é montado torto, com partes arrancadas.
+  function piece(g, mat, pw, ph, pd, x, y, z, rx = 0, ry = 0, rz = 0) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(pw, ph, pd), mat);
+    m.position.set(x, y, z); m.rotation.set(rx, ry, rz);
+    m.castShadow = true; m.receiveShadow = true; g.add(m);
+    return m;
+  }
+  function brokenChair(x, z, yaw) {
+    const g = new THREE.Group();
+    piece(g, woodMat, 0.2, 0.05, 0.46, -0.12, 0.42, 0, 0, 0, -0.12);
+    piece(g, woodMat, 0.2, 0.05, 0.46, 0.13, 0.39, 0.03, 0, 0, 0.18);
+    piece(g, darkWoodMat, 0.46, 0.52, 0.05, 0.06, 0.66, -0.3, 0.9, 0, 0.2);
+    piece(g, darkWoodMat, 0.045, 0.42, 0.045, -0.19, 0.21, -0.18, 0, 0, 0.12);
+    piece(g, darkWoodMat, 0.045, 0.35, 0.045, 0.19, 0.18, -0.19, 0, 0, -0.35);
+    piece(g, darkWoodMat, 0.045, 0.4, 0.045, -0.19, 0.2, 0.18, 0.5, 0, 0.2);
+    g.position.set(x, ay + 0.02, z); g.rotation.y = yaw;
+    group.add(g); addCollider(x, z, 0.7, 0.7, yaw, ay, ay + 0.8);
+  }
+  function brokenTable(x, z, yaw) {
+    const g = new THREE.Group();
+    piece(g, darkWoodMat, 0.52, 0.06, 0.8, -0.28, 0.7, 0, 0, 0, -0.08);
+    piece(g, darkWoodMat, 0.5, 0.06, 0.8, 0.29, 0.64, 0.12, 0, 0, 0.14);
+    piece(g, darkWoodMat, 0.07, 0.68, 0.07, -0.45, 0.34, -0.3, 0.16, 0, -0.1);
+    piece(g, darkWoodMat, 0.07, 0.5, 0.07, 0.42, 0.25, 0.32, -0.4, 0, 0.3);
+    piece(g, darkWoodMat, 0.07, 0.62, 0.07, 0.38, 0.31, -0.32, 0.2, 0, -0.2);
+    g.position.set(x, ay + 0.02, z); g.rotation.y = yaw;
+    group.add(g); addCollider(x, z, 1.15, 0.9, yaw, ay, ay + 0.8);
+  }
+  function brokenWardrobe(x, z, yaw) {
+    const g = new THREE.Group();
+    piece(g, darkWoodMat, 0.08, 1.5, 0.7, -0.38, 0.75, 0, 0, 0, -0.18);
+    piece(g, darkWoodMat, 0.08, 1.25, 0.7, 0.38, 0.63, 0.05, 0.1, 0, 0.28);
+    piece(g, woodMat, 0.78, 0.06, 0.68, 0, 1.44, 0, 0, 0, -0.22);
+    piece(g, woodMat, 0.42, 1.3, 0.05, 0.62, 0.62, 0.5, 0.2, 0.5, 0.4);
+    g.position.set(x, ay + 0.02, z); g.rotation.y = yaw;
+    group.add(g); addCollider(x, z, 0.9, 0.8, yaw, ay, ay + 1.5);
+  }
+  brokenChair(-2.1, 0.2, 0.7);
+  brokenChair(1.8, -1.7, -1.1);
+  brokenTable(-0.4, 1.2, 0.35);
+  brokenWardrobe(-3.6, 1.5, -0.45);
+
+  // Corpos enrolados em sacos plásticos: o plástico semi-transparente deixa
+  // entrever as roupas escuras e os nós nas duas pontas.
+  const bodySpots = [
+    [-2.7, -1.9, 0.35, 1],
+    [1.7, 2.1, -0.55, 0.94],
+    [-0.4, -2.7, 1.35, 0.88],
+  ];
+  function baggedBody(x, z, yaw, s) {
+    const g = new THREE.Group();
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.0, 14), bodyMat);
+    torso.rotation.x = Math.PI / 2; g.add(torso);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 14, 10), bodyMat);
+    head.position.z = -0.62; g.add(head);
+    for (const [lx, lz] of [[-0.2, 0.22], [0.2, 0.22], [-0.14, -0.28], [0.14, -0.28]]) {
+      const limb = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.055, 0.62, 10), bodyMat);
+      limb.position.set(lx, -0.02, lz); limb.rotation.x = Math.PI / 2;
+      limb.rotation.z = lx * 0.5; g.add(limb);
+    }
+    const bag = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.26, 1.18, 16), bagMat);
+    bag.rotation.x = Math.PI / 2; g.add(bag);
+    const bagHead = new THREE.Mesh(new THREE.SphereGeometry(0.23, 14, 10), bagMat);
+    bagHead.position.z = -0.62; g.add(bagHead);
+    for (const zz of [-0.62, 0.6]) {
+      const knot = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.022, 6, 14), blackMetal);
+      knot.position.z = zz; g.add(knot);
+    }
+    for (let i = 0; i < 4; i++) {
+      const fold = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.012, 0.1), bagMat);
+      fold.position.set((r() - 0.5) * 0.1, 0.16 + r() * 0.08, -0.4 + i * 0.27);
+      fold.rotation.set((r() - 0.5) * 0.3, r() * 0.5, (r() - 0.5) * 0.4);
+      g.add(fold);
+    }
+    g.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+    g.position.set(x, ay + 0.29 * s, z); g.rotation.y = yaw; g.scale.setScalar(s);
+    group.add(g);
+    decal(bloodMat, 0.8, 0.5, x, ay + 0.012, z, -Math.PI / 2, 0, yaw);
+    addCollider(x, z, 0.75 * s, 1.25 * s, yaw, ay, ay + 0.62);
+  }
+  for (const [x, z, yaw, s] of bodySpots) baggedBody(x, z, yaw, s);
+
+  // Moscas em cima dos sacos: vibram as asas e fazem voltas curtas e irritadas.
+  const flies = [];
+  for (const [bx, bz] of bodySpots) {
+    for (let i = 0; i < 5; i++) {
+      const g = new THREE.Group();
+      const fly = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), flyBodyMat);
+      fly.scale.set(1, 0.7, 1.6); g.add(fly);
+      const wingL = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 6), flyWingMat);
+      wingL.scale.set(1, 0.18, 0.55); wingL.position.set(-0.024, 0.012, 0); g.add(wingL);
+      const wingR = wingL.clone(); wingR.position.x = 0.024; g.add(wingR);
+      group.add(g);
+      flies.push({
+        g, wingL, wingR,
+        base: new THREE.Vector3(bx + (r() - 0.5) * 0.5, ay + 0.55 + r() * 0.75, bz + (r() - 0.5) * 0.5),
+        phase: r() * Math.PI * 2, speed: 1.4 + r() * 1.8, radius: 0.08 + r() * 0.22,
+      });
+    }
+  }
+  anim.push((t) => {
+    for (const f of flies) {
+      const a = t * f.speed + f.phase;
+      f.g.position.set(
+        f.base.x + Math.cos(a) * f.radius,
+        f.base.y + Math.sin(a * 1.7) * 0.12,
+        f.base.z + Math.sin(a) * f.radius
+      );
+      f.g.rotation.y = a * 1.3;
+      const flap = 0.4 + Math.abs(Math.sin(t * 24 + f.phase)) * 0.9;
+      f.wingL.rotation.z = flap; f.wingR.rotation.z = -flap;
+    }
+  });
 
   /* ---- Sangue na cama e nas paredes ---------------------------------- */
   function blood(w, h, x, y, z, rotX = 0, rotY = 0) {

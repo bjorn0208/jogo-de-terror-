@@ -149,11 +149,10 @@ export function createItems(scene) {
   safe.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   group.add(safe);
 
-  // três pilhas: em cima da cama, no fim do último cômodo e na porta de saída
+  // Única pilha do jogo: em cima do guarda-roupa do segundo quarto.
+  // O topo do móvel fica em y = 3 + 1,8 = 4,8; a caixa assenta logo acima.
   const batteries = [
-    battery(1.6, -2.2, 3.52, 0.4),        // em cima da cama, no quarto
-    battery(3.5, -3.25, 3.06, -0.8),      // no fundo do último cômodo
-    battery(-1.32, 3.2, 0.05, 0.9),       // ao lado da porta de saída
+    battery(-6.05, 0.45, 4.84, -0.35),
   ];
 
   // a chave fica dentro do cofre até ele ser aberto

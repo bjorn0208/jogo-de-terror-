@@ -412,8 +412,11 @@ function findInteractable() {
   if (!items || !started || finished || safeUI || paperUI) return null;
   const p = camera.position;
   let best = null, bestD = Infinity;
-  const consider = (type, obj, label, range) => {
+  // A distância é plana, mas a altura também conta: a pilha sobre o armário
+  // do segundo quarto não pode ser pega de baixo, atravessando o piso.
+  const consider = (type, obj, label, range, maxDy = 1.6 * SCALE) => {
     const d = Math.hypot(p.x - obj.position.x, p.z - obj.position.z);
+    if (Math.abs(p.y - obj.position.y) > maxDy) return;
     if (d <= range && d < bestD) { bestD = d; best = { type, obj, label }; }
   };
 
@@ -425,7 +428,7 @@ function findInteractable() {
   if (!items.safe.open) consider('safe', items.safe, 'ABRIR COFRE', 1.6);
 
   const dd = Math.hypot(p.x - doorPos.x, p.z - doorPos.z);
-  if (dd <= 3.5 && dd < bestD) {
+  if (controls.level === 0 && dd <= 3.5 && dd < bestD) {
     best = { type: 'door', obj: null, label: hasKey ? 'USAR CHAVE' : 'PORTA TRACADA' };
   }
   return best;
@@ -606,13 +609,15 @@ function maybeHint() {
   const p = camera.position;
   if (elapsed - lastHint < 8) return;
   if (controls.floorY > 5.5 * SCALE) {
-    showPhrase('attic', 'O sótão. O telhado range acima da sua cabeça.', 4);
+    showPhrase('attic', 'O sótão. Móveis quebrados, sacos plásticos e moscas.', 4);
     lastHint = elapsed;
     return;
   }
   if (controls.floorY > 2.5 * SCALE) {
     if (p.x > 3.9 * SCALE && p.z > -1.6 * SCALE && p.z < 1.2 * SCALE) {
       showPhrase('atticStair', 'Outra escada, mais estreita. Sobe para o sótão.', 4);
+    } else if (p.x < -4.2 * SCALE) {
+      showPhrase('secondRoom', 'Segundo quarto sem porta. O armário guarda alguma coisa.', 4);
     } else {
       showPhrase('upper', 'O corredor cheira a mofo. Tem outro quarto e um sótão.', 4);
     }
@@ -624,8 +629,8 @@ function maybeHint() {
     lastHint = elapsed;
     return;
   }
-  if (p.x < -3.4 * SCALE && p.z < -1.8 * SCALE) {
-    showPhrase('kitchen', 'Uma porta leva à cozinha. O banheiro fica no fundo dela.', 4);
+  if (p.x < -3.2 * SCALE && p.z > 1.6 * SCALE) {
+    showPhrase('kitchen', 'A cozinha fica à esquerda. Cheira a gordura queimada.', 4);
     lastHint = elapsed;
     return;
   }

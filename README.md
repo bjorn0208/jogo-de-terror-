@@ -31,9 +31,9 @@ muda de texto conforme o objeto próximo (pegar pilha, ler folha, abrir cofre,
 usar chave).
 
 **Objetivo:** cada pilha dura 2 minutos. Com 10 segundos restantes a luz começa
-a piscar. Há 3 pilhas escondidas: uma em cima da cama, outra no fundo do último
-cômodo e outra ao lado da porta de saída. Quando a atual morre, a reserva entra
-automaticamente. Se acabar a última pilha, um vídeo ocupa a tela; quando ele
+a piscar. Há **uma única pilha no jogo**, em cima do guarda-roupa do segundo
+quarto (ala esquerda do andar de cima, sem porta). Ela vem numa caixa verde com
+duas pilhas AA dentro. Se a luz morrer, um vídeo ocupa a tela; quando ele
 termina, toca o som da morte e aparece a tela final. Sem monstro.
 
 A **folha única** está pregada na parede da divisão, do lado do quarto (andar
@@ -54,7 +54,7 @@ concluir o jogo aparece o vídeo de vitória enviado e só depois a tela final.
 Tudo vem embutido no `index.html` (um único arquivo, sem internet). Os vídeos
 da morte e da vitória rodam sem áudio para poderem iniciar sozinhos.
 
-As pilhas vêm numa **caixa verde com rótulo "PILHAS AA"**, com duas pilhas AA
+A pilha vem numa **caixa verde com rótulo "PILHAS AA"**, com duas pilhas AA
 realistas (corpo prateado, anel escuro e contato de cobre) dentro dela.
 
 Use fone de ouvido: o áudio é gerado em tempo real (drone grave, passos com
@@ -68,11 +68,19 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   de altura. O porão mantém a janela gradeada e a **porta de saída trancada**
   (caminho livre de caixas), além de canos, caldeira, prateleiras, bancada,
   cadeira tombada, entulho, poças, manchas e teias.
-- **Cozinha no porão**, pela porta aberta na ala esquerda: bancada, pia, fogão,
-  geladeira e mesa. Dentro dela, um **banheiro** com sanitário, lavatório e
-  chuveiro, com porta própria na parede lateral.
-- **Segundo quarto no andar de cima**, na mesma ala esquerda, com cama estreita
-  e guarda-roupa.
+- **Cozinha logo na entrada, à esquerda**: o vão amplo fica na frente, junto da
+  boca da escada, e não mais escondido atrás do topo dela. Tem **fogão
+  queimado** com bocas tortas e exaustor derretido, **geladeira enferrujada**,
+  **armário com a porta carbonizada**, bancada suja, pia com água parada e mesa
+  com restos de comida. Dentro, o **banheiro** tem mofo, ferrugem, água suja no
+  sanitário e pano de chuveiro infectado.
+- **Segundo quarto no andar de cima**, na ala esquerda: **sem porta, batente ou
+  folha**, com cama estreita, mala, móveis velhos e um **guarda-roupa alto onde
+  fica a única pilha do jogo**. A altura também entra na interação: não dá para
+  pegar o que está no andar de cima atravessando o piso.
+- **Sótão com móveis quebrados** (cadeiras, mesa e armário desmontados),
+  **três corpos enrolados em sacos plásticos** com manchas escuras embaixo e
+  **moscas** que voam em círculos e vibram as asas.
 - **Escada do sótão** no canto direito do quarto: 30 degraus abertos, mesma
   rampa sólida da primeira escada, sem corrimão ou madeiras laterais. O piso
   tem dois vãos recortados para as escadas passarem.
@@ -100,8 +108,9 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
   coloração verde-amarelada doente.
 - Colisão com paredes e objetos, passo com head-bob, agachamento e corrida.
 - Áudio procedural com reverberação sintética de porão.
-- **Pilhas limitadas**: 2 min cada, aviso de 10 s piscando e troca automática
-  das reservas. HUD mostra tempo restante, reservas e se você já tem a chave.
+- **Pilha única e limitada**: 2 min, aviso de 10 s piscando e HUD com tempo
+  restante, reservas (sempre zeradas, pois só existe uma pilha) e se você já tem
+  a chave.
 - **Cofre com senha** sobre o criado-mudo do quarto: uma folha suja pregada na
   parede da divisão traz os quatro dígitos destacados entre as palavras. Ao
   abrir, a chave aparece dentro dele; use-a na porta lá embaixo.
