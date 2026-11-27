@@ -86,7 +86,7 @@ let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 
 /* ---- Partida: pilha, chave, frases ditas uma única vez ---------------- */
 let batterySeconds = BATTERY_SECONDS, spares = 0, hasKey = false;
-let lowWarned = false, doomed = false, doomTimer = 0, deathVideoPlaying = false;
+let lowWarned = false, doomed = false, doomTimer = 0, deathVideoPlaying = false, winVideoPlaying = false;
 let shake = 0, creakStep = 0, statusClock = 0;
 let safeUI = false, safeInput = '', paperUI = false, activeTarget = null, actionLabel = '';
 const saidPhrases = new Set();
@@ -284,6 +284,36 @@ function playDeathVideo() {
   $('death-video').classList.add('visible');
   const p = v.play();
   if (p && p.catch) p.catch(finishDeathVideo);
+}
+
+/** Vídeo da vitória: aparece depois de usar a chave, antes da tela final. */
+function playWinVideo() {
+  const src = window.__PORAO_WIN_VIDEO__ || '';
+  if (!src) { showWinScreen(); return; }
+  winVideoPlaying = true;
+  const v = $('win-video-el');
+  v.src = src;
+  try { v.currentTime = 0; } catch (_) { /* vídeo ainda sem metadata */ }
+  v.muted = true;
+  $('win-video').classList.add('visible');
+  if (!isTouch && document.pointerLockElement) document.exitPointerLock();
+  const p = v.play();
+  if (p && p.catch) p.catch(finishWinVideo);
+}
+
+function finishWinVideo() {
+  if (!winVideoPlaying) return;
+  winVideoPlaying = false;
+  const v = $('win-video-el');
+  v.pause();
+  $('win-video').classList.remove('visible');
+  showWinScreen();
+}
+
+function showWinScreen() {
+  $('win').classList.add('visible');
+  hud.classList.remove('visible');
+  if (!isTouch && document.pointerLockElement) document.exitPointerLock();
 }
 
 function updateStatus() {
@@ -510,9 +540,7 @@ function tryUseKey() {
   started = false;
   controls.enabled = false;
   $('win-detail').textContent = 'Ainda restavam ' + fmtTime(batterySeconds) + ' de pilha e ' + spares + ' reservas.';
-  $('win').classList.add('visible');
-  hud.classList.remove('visible');
-  if (!isTouch && document.pointerLockElement) document.exitPointerLock();
+  playWinVideo();
 }
 
 function gameOver(detail) {
@@ -615,6 +643,11 @@ function restartGame() {
   v.pause();
   v.removeAttribute('src');
   $('death-video').classList.remove('visible');
+  winVideoPlaying = false;
+  const wv = $('win-video-el');
+  wv.pause();
+  wv.removeAttribute('src');
+  $('win-video').classList.remove('visible');
   batterySeconds = BATTERY_SECONDS; spares = 0; hasKey = false;
   lowWarned = false; doomed = false; doomTimer = 0;
   shake = 0; creakStep = 0; statusClock = 0;
@@ -701,6 +734,9 @@ $('paper').addEventListener('click', closePaperUI);
 $('death-video-el').addEventListener('ended', finishDeathVideo);
 $('death-video-el').addEventListener('error', finishDeathVideo);
 $('death-video').addEventListener('click', finishDeathVideo);
+$('win-video-el').addEventListener('ended', finishWinVideo);
+$('win-video-el').addEventListener('error', finishWinVideo);
+$('win-video').addEventListener('click', finishWinVideo);
 document.addEventListener('keydown', (e) => {
   if (paperUI) {
     if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
@@ -711,6 +747,12 @@ document.addEventListener('keydown', (e) => {
   if (deathVideoPlaying) {
     if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
       e.preventDefault(); finishDeathVideo();
+    }
+    return;
+  }
+  if (winVideoPlaying) {
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); finishWinVideo();
     }
     return;
   }

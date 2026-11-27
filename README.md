@@ -47,9 +47,9 @@ folha, pegue a chave e desça para usar na porta de saída.
 do quarto o fundo muda para a "floresta escura"; ao acabar a última pilha aparece
 o vídeo enviado e, no fim dele, toca o som de luta. Ao abrir o cofre toca o som
 de cofre abrindo e ao abrir a porta de saída toca o som de porta/vitória — os
-dois enviados por você. Tudo vem embutido no `index.html` (um único arquivo, sem
-internet). O vídeo roda sem áudio para poder iniciar sozinho; o som da morte
-toca depois dele.
+dois enviados por você. Ao concluir o jogo aparece o vídeo de vitória enviado e
+só depois a tela final. Tudo vem embutido no `index.html` (um único arquivo, sem
+internet). Os vídeos rodam sem áudio para poderem iniciar sozinhos.
 
 As pilhas vêm numa **caixa verde com rótulo "PILHAS AA"**, com duas pilhas AA
 realistas (corpo prateado, anel escuro e contato de cobre) dentro dela.
