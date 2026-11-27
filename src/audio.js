@@ -112,6 +112,15 @@ export class HorrorAudio {
   /** Som da morte, tocado depois do vídeo da última pilha. */
   playDeath() { this.playOneShot('death', 0.95); }
 
+  /** Cofre abrindo (áudio enviado pelo usuário). */
+  playSafeOpen() { this.playOneShot('safe', 1); }
+
+  /** Porta de saída abrindo: som de vitória enviado pelo usuário. */
+  playWin() {
+    this.stopBeds(0.6);
+    this.playOneShot('win', 1);
+  }
+
   resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
 
   setMuted(m) {

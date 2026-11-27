@@ -471,7 +471,7 @@ function safeSubmit() {
     items.safe.open = true;
     items.safe.door.rotation.y = -1.35;
     items.key.mesh.visible = true;
-    audio.unlock();
+    audio.playSafeOpen();
     closeSafeUI();
     showPhrase('safeOpen', 'O cofre cedeu. A chave está aqui dentro.', 5);
   } else {
@@ -504,8 +504,7 @@ function tryUseKey() {
     showPhrase('exitFront', 'A porta de saída fica na parede da frente.', 4);
     return;
   }
-  audio.unlock();
-  audio.stopBeds(0.6);
+  audio.playWin();
   items.padlock.visible = false;
   finished = true;
   started = false;

@@ -11,7 +11,7 @@ const css = await readFile(join(root, 'src/style.css'), 'utf8');
 // Áudios dos links do usuário, embutidos como data URI para o jogo
 // continuar funcionando offline em um único arquivo.
 const audio = {};
-for (const name of ['death', 'start', 'forest']) {
+for (const name of ['death', 'start', 'forest', 'safe', 'win']) {
   try {
     const buf = await readFile(join(root, 'assets/audio', name + '.mp3'));
     audio[name] = 'data:audio/mpeg;base64,' + buf.toString('base64');
