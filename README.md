@@ -9,7 +9,8 @@ O repositório estava vazio; este é o ponto de partida.
 ## Como jogar
 
 Abra **`index.html`** no navegador (funciona direto do arquivo, sem servidor e
-sem internet). Clique em **ENTRAR NO PORÃO**.
+sem internet). O **trailer abre antes do menu**; quando ele termina (ou ao clicar
+em **PULAR**), aparece o menu e aí sim você clica em **ENTRAR NO PORÃO**.
 
 | Tecla | Ação |
 | --- | --- |
@@ -43,13 +44,15 @@ ordem certa, e ela vem embutida no `index.html`, sem internet. O **cofre está e
 e guarda a chave da porta. Abra-o com `E`/**PEGAR**, digite os quatro números da
 folha, pegue a chave e desça para usar na porta de saída.
 
-**Áudios/vídeo:** ao entrar toca o fundo de "cena de assassino"; ao ler a folha
-do quarto o fundo muda para a "floresta escura"; ao acabar a última pilha aparece
-o vídeo enviado e, no fim dele, toca o som de luta. Ao abrir o cofre toca o som
-de cofre abrindo e ao abrir a porta de saída toca o som de porta/vitória — os
-dois enviados por você. Ao concluir o jogo aparece o vídeo de vitória enviado e
-só depois a tela final. Tudo vem embutido no `index.html` (um único arquivo, sem
-internet). Os vídeos rodam sem áudio para poderem iniciar sozinhos.
+**Áudios/vídeo:** o trailer enviado abre o jogo (com áudio se o navegador
+permitir; se bloquear, aparece o botão **ATIVAR SOM**). Depois de entrar toca o
+fundo de "cena de assassino"; ao ler a folha do quarto o fundo muda para a
+"floresta escura"; ao acabar a última pilha aparece o vídeo da morte e, no fim
+dele, toca o som de luta. Ao abrir o cofre toca o som de cofre abrindo e ao abrir
+a porta de saída toca o som de porta/vitória — os dois enviados por você. Ao
+concluir o jogo aparece o vídeo de vitória enviado e só depois a tela final.
+Tudo vem embutido no `index.html` (um único arquivo, sem internet). Os vídeos
+da morte e da vitória rodam sem áudio para poderem iniciar sozinhos.
 
 As pilhas vêm numa **caixa verde com rótulo "PILHAS AA"**, com duas pilhas AA
 realistas (corpo prateado, anel escuro e contato de cobre) dentro dela.
@@ -59,6 +62,8 @@ eco de porão, goteiras, rangidos da escada e guinchos de rato).
 
 ## O que já existe
 
+- **Trailer de abertura** em vídeo, exibido em tela cheia antes do menu, com
+  botão para pular e opção de ativar o som se o autoplay com áudio for bloqueado.
 - Casa em **tamanho normal** (8,4 × 7,2 × 3 m por andar). O porão tem paredes e
   piso de concreto, janela gradeada e a **única porta da casa** (a de saída,
   trancada, com o caminho livre de caixas). Também tem canos, caldeira,

@@ -86,7 +86,7 @@ let flickerUntil = -1, lastHint = -99, hintTimer = 0;
 
 /* ---- Partida: pilha, chave, frases ditas uma única vez ---------------- */
 let batterySeconds = BATTERY_SECONDS, spares = 0, hasKey = false;
-let lowWarned = false, doomed = false, doomTimer = 0, deathVideoPlaying = false, winVideoPlaying = false;
+let lowWarned = false, doomed = false, doomTimer = 0, deathVideoPlaying = false, winVideoPlaying = false, trailerPlaying = false;
 let shake = 0, creakStep = 0, statusClock = 0;
 let safeUI = false, safeInput = '', paperUI = false, activeTarget = null, actionLabel = '';
 const saidPhrases = new Set();
@@ -314,6 +314,38 @@ function showWinScreen() {
   $('win').classList.add('visible');
   hud.classList.remove('visible');
   if (!isTouch && document.pointerLockElement) document.exitPointerLock();
+}
+
+/** Abertura: o trailer aparece antes do menu e libera o menu ao terminar. */
+function startTrailer() {
+  const src = window.__PORAO_TRAILER_VIDEO__ || '';
+  if (!src) return; // sem trailer, o menu continua na tela
+  trailerPlaying = true;
+  overlay.classList.remove('visible');
+  const box = $('trailer-video');
+  const v = $('trailer-video-el');
+  v.src = src;
+  v.muted = false;
+  box.classList.add('visible');
+  const p = v.play();
+  if (p && p.catch) p.catch(() => {
+    // Navegador bloqueou autoplay com áudio: segue mudo e oferece o botão de som.
+    v.muted = true;
+    $('trailer-sound').hidden = false;
+    const mutedPlay = v.play();
+    if (mutedPlay && mutedPlay.catch) mutedPlay.catch(finishTrailer);
+  });
+}
+
+function finishTrailer() {
+  if (!trailerPlaying) return;
+  trailerPlaying = false;
+  const v = $('trailer-video-el');
+  v.pause();
+  v.removeAttribute('src');
+  $('trailer-sound').hidden = true;
+  $('trailer-video').classList.remove('visible');
+  overlay.classList.add('visible');
 }
 
 function updateStatus() {
@@ -737,7 +769,23 @@ $('death-video').addEventListener('click', finishDeathVideo);
 $('win-video-el').addEventListener('ended', finishWinVideo);
 $('win-video-el').addEventListener('error', finishWinVideo);
 $('win-video').addEventListener('click', finishWinVideo);
+$('trailer-video-el').addEventListener('ended', finishTrailer);
+$('trailer-video-el').addEventListener('error', finishTrailer);
+$('trailer-skip').addEventListener('click', finishTrailer);
+$('trailer-sound').addEventListener('click', () => {
+  const v = $('trailer-video-el');
+  v.muted = false;
+  $('trailer-sound').hidden = true;
+  const p = v.play();
+  if (p && p.catch) p.catch(() => { v.muted = true; });
+});
 document.addEventListener('keydown', (e) => {
+  if (trailerPlaying) {
+    if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault(); finishTrailer();
+    }
+    return;
+  }
   if (paperUI) {
     if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
       e.preventDefault(); closePaperUI();
@@ -823,6 +871,7 @@ function animate() {
   renderFrame(elapsed);
 }
 
+startTrailer();
 animate();
 // Texturas pesadas são geradas depois do primeiro frame, para o menu aparecer.
 setTimeout(build, 60);

@@ -166,6 +166,23 @@ button:disabled{opacity:.45;cursor:wait}
   filter:brightness(1.35) contrast(1.08)
 }
 
+#trailer-video{
+  position:fixed;inset:0;z-index:20;display:none;background:#000
+}
+#trailer-video.visible{display:block}
+#trailer-video video{
+  display:block;width:100vw;height:100vh;height:100dvh;object-fit:contain;background:#000
+}
+#trailer-ui{
+  position:absolute;left:0;right:0;bottom:max(18px,env(safe-area-inset-bottom));
+  display:flex;gap:10px;justify-content:center
+}
+#trailer-ui button{
+  padding:10px 18px;font-size:10px;letter-spacing:.18em;
+  background:rgba(10,14,11,.65);border-color:rgba(160,175,140,.28)
+}
+#trailer-ui button[hidden]{display:none}
+
 #death-video,#win-video{
   position:fixed;inset:0;z-index:20;display:none;background:#000;cursor:pointer
 }

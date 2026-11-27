@@ -29,8 +29,8 @@ try {
   console.warn('Imagem da folha não encontrada; usando papel procedural.');
 }
 
-// Vídeos da morte e da vitória, embutidos para o jogo continuar offline.
-let deathVideo = '', winVideo = '';
+// Vídeos da abertura, morte e vitória, embutidos para o jogo ficar offline.
+let deathVideo = '', winVideo = '', trailerVideo = '';
 try {
   const buf = await readFile(join(root, 'assets/video/death.mp4'));
   deathVideo = 'data:video/mp4;base64,' + buf.toString('base64');
@@ -42,6 +42,12 @@ try {
   winVideo = 'data:video/mp4;base64,' + buf.toString('base64');
 } catch (err) {
   console.warn('Vídeo da vitória não encontrado; usando apenas a tela final.');
+}
+try {
+  const buf = await readFile(join(root, 'assets/video/trailer.mp4'));
+  trailerVideo = 'data:video/mp4;base64,' + buf.toString('base64');
+} catch (err) {
+  console.warn('Trailer não encontrado; abrindo direto no menu.');
 }
 
 const options = {
@@ -68,6 +74,7 @@ const options = {
           .replace('/*__PAPER__*/', () => JSON.stringify(paperImage))
           .replace('/*__DEATH_VIDEO__*/', () => JSON.stringify(deathVideo))
           .replace('/*__WIN_VIDEO__*/', () => JSON.stringify(winVideo))
+          .replace('/*__TRAILER_VIDEO__*/', () => JSON.stringify(trailerVideo))
           .replace('/*__BUNDLE__*/', () => safeJs);
         await writeFile(join(root, 'index.html'), html);
         console.log(`index.html gerado (${(html.length / 1024).toFixed(0)} KB)`);
